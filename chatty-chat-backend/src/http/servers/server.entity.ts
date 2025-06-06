@@ -18,6 +18,9 @@ export class ServerEntity {
     @JoinColumn()
     rooms: Room[];
 
+    @Column()
+    iconUrl: string;
+
     @ManyToOne(() => User)
     @JoinColumn()
     creator: User;
