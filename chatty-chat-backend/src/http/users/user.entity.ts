@@ -18,7 +18,7 @@ export class User {
     avatarUrl: string;
 
     @ManyToMany(() => Room)
-    rooms: Room[];
+    privateRooms: Room[];
 
     @ManyToMany(() => ServerEntity)
     servers: ServerEntity[];
