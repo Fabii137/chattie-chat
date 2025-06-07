@@ -1,1 +1,16 @@
-<router-outlet></router-outlet>
+<mat-drawer-container class="app-container" autosize>
+    <mat-drawer *ngIf="isLoggedIn()" #drawer class="app-sidenav" mode="side" opened>
+        <div class="server-list">
+            <p>Server</p>
+            <p>Server</p>
+        </div>
+    </mat-drawer>
+
+    <mat-drawer-content class="app-content">
+        <app-navbar *ngIf="isLoggedIn()" (toggleSidenav)="toggleDrawer()"></app-navbar>
+
+        <div class="content-area">
+            <router-outlet></router-outlet>
+        </div>
+    </mat-drawer-content>
+</mat-drawer-container>

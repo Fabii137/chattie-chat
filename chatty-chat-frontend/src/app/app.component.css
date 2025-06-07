@@ -1,0 +1,54 @@
+.app-container {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+}
+
+.app-sidenav {
+    width: 100px;
+    background-color: #2f3136;
+    color: white;
+    border-right: 1px solid var(--mat-sys-outline);
+    padding: 8px 0;
+    overflow-y: auto;
+}
+
+.server-list {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-content {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+mat-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.content-area {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.hide-desktop {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .app-sidenav {
+        width: 100px;
+    }
+
+    .hide-desktop {
+        display: inline-flex;
+    }
+}

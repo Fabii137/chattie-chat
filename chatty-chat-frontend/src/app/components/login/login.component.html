@@ -1,1 +1,47 @@
-<p>login works!</p>
+<div class="container">
+    @if(!isRegistering) {
+    <div class="form-container">
+        <h2>Login</h2>
+        <mat-form-field>
+            <mat-label>Email</mat-label>
+            <input matInput type="text" (keydown.enter)="onEnterLogin()" [(ngModel)]="email" required>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Password</mat-label>
+            <input matInput type="password" (keydown.enter)="onEnterLogin()" [(ngModel)]="password" required>
+        </mat-form-field>
+        <mat-checkbox [(ngModel)]="keepLoggedIn">Save Login</mat-checkbox>
+        <button mat-flat-button (click)="login()">Login</button>
+        <p>Don't have an account? <a (click)="toggle()">Register here</a></p>
+    </div>
+    } @else {
+    <div class="form-container">
+        <h2>Register</h2>
+        <mat-form-field>
+            <mat-label>Username</mat-label>
+            <input matInput type="text" (keydown.enter)="onEnterRegister()" [(ngModel)]="newUsername" required>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Email</mat-label>
+            <input matInput type="email" (keydown.enter)="onEnterRegister()" [(ngModel)]="newEmail" required>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Password</mat-label>
+            <input matInput (keydown.enter)="onEnterRegister()" [type]="hidePassword ? 'password' : 'text'" [(ngModel)]="newPassword" required>
+            @if (newPassword) {
+            <button matSuffix mat-icon-button aria-label="Show" (click)="showHidePassword()">
+                <mat-icon>{{ hidePassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+            </button>
+            }
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Confirm Password</mat-label>
+            <input matInput (keydown.enter)="onEnterRegister()" type="password" [(ngModel)]="confirmPassword" required>
+        </mat-form-field>
+        <mat-checkbox [(ngModel)]="keepLoggedIn">Save Login</mat-checkbox>
+        <button mat-flat-button (click)="register()">Register</button>
+
+        <p>Already have an account? <a (click)="toggle()">Login here</a></p>
+    </div>
+    }
+</div>

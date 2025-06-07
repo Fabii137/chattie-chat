@@ -1,7 +1,7 @@
 
 import { Room } from "src/http/rooms/room.entity";
 import { ServerEntity } from "src/http/servers/server.entity";
-import { Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: 'users' })
 export class User {
@@ -14,8 +14,25 @@ export class User {
     @Column({ unique: true })
     email: string;
 
+    @Column()
+    password: string;
+
     @Column({ nullable: true})
     avatarUrl: string;
+
+    @ManyToMany(() => User)
+    @JoinTable({'name': 'user_friends'})
+    friends: User[];
+
+    @ManyToMany(() => User, (user) => user.outgoingFriendRequests)
+    @JoinTable({name: 'user_friend_requests'})
+    incomingFriendRequests: User[];
+    
+    @ManyToMany(() => User, (user) => user.incomingFriendRequests)
+    outgoingFriendRequests: User[];
+
+    @Column()
+    isOnline: boolean;
 
     @ManyToMany(() => Room)
     privateRooms: Room[];

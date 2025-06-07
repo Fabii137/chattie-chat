@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "chatty-chat-frontend": {
+    "chattie-chat-frontend": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -13,7 +13,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/chatty-chat-frontend",
+            "outputPath": "dist/chattie-chat-frontend",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": [
@@ -58,12 +58,15 @@
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "proxyConfig": "src/proxy.conf.json"
+          },
           "configurations": {
             "production": {
-              "buildTarget": "chatty-chat-frontend:build:production"
+              "buildTarget": "chattie-chat-frontend:build:production"
             },
             "development": {
-              "buildTarget": "chatty-chat-frontend:build:development"
+              "buildTarget": "chattie-chat-frontend:build:development"
             }
           },
           "defaultConfiguration": "development"

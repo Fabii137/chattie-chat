@@ -1,0 +1,28 @@
+.container {
+    display: flex;
+    height: calc(100% - (20px*2));
+    padding: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-container {
+    border-radius: 10px;
+    display: flex;
+    height: fit-content;
+    width: fit-content;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    mat-form-field {
+        width: 250px;
+    }
+}
+
+a {
+    text-decoration: underline;
+    &:hover{
+        cursor: pointer;
+    }
+}
