@@ -1,6 +1,98 @@
-<!-- TODO: 
-    section Online friends
-    section Friends
-    section Add friend
--->
-<p>Friends works!</p>
+<div class="friends-container">
+    <div class="friend-nav">
+        <button mat-flat-button (click)="showSection('online')">Online</button>
+        <button mat-flat-button (click)="showSection('all')">All</button>
+        <button mat-flat-button (click)="showSection('add')">Add Friend</button>
+        <button mat-flat-button (click)="showSection('requests')">Friend Requests</button>
+    </div>
+    <!-- Online Friends Section-->
+    <div class="online-friends-container" *ngIf="activeSection === 'online'">
+        <h2>Online Friends - {{onlineFriends.length}}</h2>
+        <div class="friends" *ngIf="onlineFriends.length > 0; else noOnlineFriends">
+            <div class="friend" *ngFor="let friend of onlineFriends">
+                <div class="left">
+                    <img [src]="getAvatar(friend)" [alt]="friend.username" class="avatar">
+                    <div class="stacked">
+                        <span>{{ friend.username }}</span>
+                        <span class="status">{{friend.isOnline ? "Online" : "Offline"}}</span>
+                    </div>
+                </div>
+                <div class="right">
+                    <button mat-icon-button>
+                        <mat-icon>chat</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteFriend(friend)">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        <ng-template #noOnlineFriends>
+            <p style="font-size: 20px;">No online friends at the moment.</p>
+        </ng-template>
+    </div>
+
+    <!-- All Friend Section-->
+    <div class="all-friends-container" *ngIf="activeSection === 'all'">
+        <h2>Friends - {{friends.length}}</h2>
+        <div class="friends" *ngIf="friends.length > 0; else noFriends">
+            <div class="friend" *ngFor="let friend of friends">
+                <div class="left">
+                    <img [src]="getAvatar(friend)" [alt]="friend.username" class="avatar">
+                    <div class="stacked">
+                        <span>{{ friend.username }}</span>
+                        <span class="status">{{friend.isOnline ? "Online" : "Offline"}}</span>
+                    </div>
+                </div>
+                <div class="right">
+                    <button mat-icon-button>
+                        <mat-icon>chat</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteFriend(friend)">
+                        <mat-icon>delete</mat-icon>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+        <ng-template #noFriends>
+            <p style="font-size: 20px;">No friends yet. Add some!</p>
+            <button mat-flat-button (click)="showSection('add')">Add Friend</button>
+        </ng-template>
+    </div>
+
+    <!-- Add Friend Section-->
+    <div class="add-friend-container" *ngIf="activeSection === 'add'">
+        <h2>Add Friend</h2>
+        <mat-form-field>
+            <mat-label>Username</mat-label>
+            <input matInput type="text" [(ngModel)]="newFriendUsername" required>
+        </mat-form-field>
+        <button mat-flat-button (click)="sendFriendRequest()">Add Friend</button>
+    </div>
+
+    <!-- Friend Requests Section-->
+    <div class="friend-requests-container" *ngIf="activeSection === 'requests'">
+        <h2>Friend Requests - {{friendRequests.length}}</h2>
+        <div class="friends" *ngIf="friendRequests.length > 0; else noFriendRequests">
+            <div class="friend" *ngFor="let request of friendRequests">
+                <div class="left">
+                    <img [src]="getAvatar(request)" [alt]="request.username" class="avatar">
+                    <span>{{ request.username }}</span>
+                </div>
+                <div class="right">
+                    <button mat-icon-button (click)="acceptFriendRequest(request)">
+                        <mat-icon>check</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="rejectFriendRequest(request)">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <ng-template #noFriendRequests>
+            <p style="font-size: 20px;">No friend requests at the moment.</p>
+        </ng-template>
+    </div>
+</div>

@@ -6,7 +6,6 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { NavbarComponent } from './components/navbar/navbar.component';
 import { AuthService } from '../services/auth.service';
-import { BackendService } from '../services/backend.service';
 import { CommonModule } from '@angular/common';
 
 @Component({

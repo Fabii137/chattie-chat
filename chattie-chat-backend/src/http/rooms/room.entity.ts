@@ -3,6 +3,11 @@ import { User } from "src/http/users/user.entity";
 import { Column, CreateDateColumn, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { ServerEntity } from "../servers/server.entity";
 
+export enum RoomType {
+    DM = 'dm',
+    GROUP = 'group'
+} 
+
 @Entity({ name: 'rooms' })
 export class Room {
     @PrimaryGeneratedColumn()
@@ -10,6 +15,9 @@ export class Room {
 
     @Column()
     name: string;
+
+    @Column({type: 'enum', enum: RoomType})
+    type: RoomType;
 
     @OneToMany(() => Message, (message) => message.room)
     messages: Message[];

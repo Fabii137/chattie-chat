@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
 import { User } from '../entities/user.entity';
-import { BackendService } from './backend.service';
+import { UserService } from './http-backend/user.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   currentUser: User | null = null;
-  constructor(private backendService: BackendService, private snackBar: MatSnackBar, private router: Router) {
+  constructor(private userService: UserService, private snackBar: MatSnackBar, private router: Router) {
     const storagedEmail = localStorage.getItem('email');
     const storagedPassword = localStorage.getItem('password');
     if(storagedEmail && storagedPassword)
@@ -20,54 +21,34 @@ export class AuthService {
     return this.currentUser !== null;
   }
 
-  getCurrentUser(): User | null {
-    return this.currentUser;
-  }
-
-  getFriends(): User[] {
-    return this.currentUser?.friends ?? [];
-  }
-
-  getOnlineFriends(): User[] {
-    return (this.currentUser?.friends ?? []).filter(friend => friend.isOnline);
-  }
-
   async register(username: string, email: string, password: string, saveCredentials: boolean): Promise<User | null> {
     try {
-      const user = await this.backendService.register(username, email, password).toPromise();
+      const user = await firstValueFrom(this.userService.register(username, email, password));
       if (user) {
         this.currentUser = user;
-        this.openSnackBar(`Successfully logged in as ${user.username}`)
         if(saveCredentials)
           this.saveCredentials(email, password);
         this.router.navigate(['friends']);
       }
       return user ? user : null;
-    } catch (error: unknown) {
-      if (this.isHttpError(error) && error.status === 409) {
-        console.error(error.error.message);
-        this.openSnackBar(error.error.message);
-      }
+    } catch (error: any) {
+      this.openSnackBar(error.message || 'Registration failed');
       return null;
     }
   }
 
   async login(email: string, password: string, saveCredentials: boolean): Promise<User | null> {
     try {
-      const user = await this.backendService.login(email, password).toPromise();
+      const user = await firstValueFrom(this.userService.login(email, password));
       if (user) {
         this.currentUser = user;
-        this.openSnackBar(`Successfully logged in as ${user.username}`)
         if(saveCredentials)
           this.saveCredentials(email, password);
         this.router.navigate(['friends']);
       }
       return user ? user : null;
-    } catch (error: unknown) {
-      if (this.isHttpError(error) && error.status === 401) {
-        console.error(error.error.message);
-        this.openSnackBar(error.error.message);
-      }
+    } catch (error: any) {
+      this.openSnackBar(error.message || 'Login failed');
       return null;
     }
   }
@@ -76,7 +57,7 @@ export class AuthService {
     if(!this.currentUser)
       return;
 
-    this.backendService.setOffline(this.currentUser);
+    this.userService.setOffline(this.currentUser);
     this.deleteSavedCredentials();
     this.currentUser = null;
     this.router.navigate(['login']);
@@ -84,11 +65,7 @@ export class AuthService {
 
   setOffline() {
     const user = this.currentUser;
-    this.backendService.setOffline(user);
-  }
-
-  isHttpError(error: any): error is { status: number; error: { message: string } } {
-    return error && typeof error.status === 'number' && error.error && typeof error.error.message === 'string';
+    this.userService.setOffline(user);
   }
 
   saveCredentials(email: string, password: string) {
@@ -98,6 +75,7 @@ export class AuthService {
   }
 
   deleteSavedCredentials() {
+    // TODO: token instead of password!
     localStorage.removeItem('email');
     localStorage.removeItem('password');
   }

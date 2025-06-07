@@ -29,19 +29,15 @@ export class LoginComponent {
 
   keepLoggedIn: boolean = false;
 
-  constructor(private authService: AuthService, private router: Router, private snackBar: MatSnackBar) { }
+  constructor(private authService: AuthService, private router: Router, private snackBar: MatSnackBar) {
+    if (this.authService.isLoggedIn()) {
+      this.router.navigate(['/friends']);
+    }
+  }
 
   toggle() {
     this.isRegistering = !this.isRegistering;
-    this.keepLoggedIn = false;
-    this.email = '';
-    this.password = '';
-
-    this.newUsername = '';
-    this.newEmail = '';
-    this.newPassword = '';
-    this.confirmPassword = '';
-    this.hidePassword = true;
+    this.resetFields();
   }
 
   async login() {
@@ -49,7 +45,10 @@ export class LoginComponent {
     const trimmedPassword = this.password.trim();
 
     if (trimmedEmail && trimmedPassword) {
-      await this.authService.login(trimmedEmail, trimmedPassword, this.keepLoggedIn);
+      const user = await this.authService.login(trimmedEmail, trimmedPassword, this.keepLoggedIn);
+      if(user) {
+        this.openSnackBar(`Successfully logged in as ${user.username}`)
+      }
     } else {
       this.openSnackBar('Enter valid email and password');
     }
@@ -69,7 +68,10 @@ export class LoginComponent {
     if(!this.isValidEmail(trimmedEmail) || !this.isValidPassword(trimmedPassword) || !this.isValidUsername(trimmedUsername))
       return;
 
-    await this.authService.register(trimmedUsername, trimmedEmail, trimmedPassword, this.keepLoggedIn);
+    const user = await this.authService.register(trimmedUsername, trimmedEmail, trimmedPassword, this.keepLoggedIn);
+    if(user) {
+      this.openSnackBar(`Successfully registered as ${user.username}`);
+    }
   }
 
   isValidEmail(email: string): boolean {
@@ -117,6 +119,18 @@ export class LoginComponent {
 
   async onEnterLogin() {
     await this.login();
+  }
+
+  resetFields() {
+    this.keepLoggedIn = false;
+    this.email = '';
+    this.password = '';
+
+    this.newUsername = '';
+    this.newEmail = '';
+    this.newPassword = '';
+    this.confirmPassword = '';
+    this.hidePassword = true;
   }
 
   showHidePassword() {
