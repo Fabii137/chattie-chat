@@ -100,11 +100,11 @@ export class UserService {
     }
 
     async sendFriendRequest(senderId: number, receiverName: string): Promise<void> {
-        const sender = await this.userRepo.findOne({ where: { id: senderId } });
+        const sender = await this.userRepo.findOne({ where: { id: senderId }, relations: ["friends", "outgoingFriendRequests"] });
         if (!sender)
             throw new UnauthorizedException("Sender not found");
 
-        const receiver = await this.userRepo.findOne({ where: { username: receiverName } });
+        const receiver = await this.userRepo.findOne({ where: { username: receiverName }, relations: ["friends", "incomingFriendRequests"] });
         if (!receiver) {
             throw new UnauthorizedException("Receiver not found");
         }
@@ -113,44 +113,66 @@ export class UserService {
             throw new ConflictException("You cannot send a friend request to yourself");
         }
 
-        if (sender.friends.some(friend => friend.id === receiver.id)) {
+        const alreadyFriends = await this.userRepo.createQueryBuilder('user')
+            .leftJoin('user.friends', 'friend')
+            .where('user.id = :receiverId', { receiverId: receiver.id})
+            .andWhere('friend.id = :senderId', {senderId})
+            .getCount();
+
+        if (alreadyFriends) {
             throw new ConflictException("You are already friends with this user");
         }
 
-        if (receiver.incomingFriendRequests.some(request => request.id === sender.id)) {
-            throw new ConflictException("Friend request already sent");
+        const alreadyRequested = await this.userRepo.createQueryBuilder('user')
+            .leftJoin('user.incomingFriendRequests', 'request')
+            .where('user.id = :receiverId', { receiverId: receiver.id})
+            .andWhere('request.id = :senderId', {senderId})
+            .getCount();
+
+        if(alreadyRequested) {
+            throw new ConflictException("You already sent a friend request to this person");
         }
 
-        if (sender.outgoingFriendRequests.some(request => request.id === receiver.id)) {
-            throw new ConflictException("You have already sent a friend request to this user");
-        }
-
-        sender.outgoingFriendRequests.push(receiver);
+        receiver.incomingFriendRequests = receiver.incomingFriendRequests || [];
         receiver.incomingFriendRequests.push(sender);
 
+        sender.outgoingFriendRequests = sender.outgoingFriendRequests || [];
+        sender.outgoingFriendRequests.push(receiver);
+        
         await this.userRepo.save(sender);
         await this.userRepo.save(receiver);
     }
 
     async acceptFriendRequest(senderId: number, receiverId: number): Promise<void> {
-        const sender = await this.userRepo.findOne({ where: { id: senderId } });
+        const sender = await this.userRepo.findOne({ where: { id: senderId }, relations: ["friends", "outgoingFriendRequests"] });
         if (!sender) {
             throw new UnauthorizedException("Sender not found");
         }
 
-        const receiver = await this.userRepo.findOne({ where: { id: receiverId } });
+        const receiver = await this.userRepo.findOne({ where: { id: receiverId }, relations: ["friends", "incomingFriendRequests"] });
         if (!receiver) {
             throw new UnauthorizedException("Receiver not found");
         }
 
-        if (!receiver.incomingFriendRequests.some(request => request.id === sender.id)) {
+        const requestExists = await this.userRepo.createQueryBuilder('user')
+            .leftJoin('user.incomingFriendRequests', 'request')
+            .where('user.id = :receiverId', { receiverId: receiver.id})
+            .andWhere('request.id = :senderId', {senderId})
+            .getCount();
+
+        console.log({receiverId: receiver.id, senderId, requestExists})
+
+        if(!requestExists) {
             throw new ConflictException("No friend request from this user");
         }
 
-        receiver.incomingFriendRequests = receiver.incomingFriendRequests.filter(request => request.id !== sender.id);
-        sender.outgoingFriendRequests = sender.outgoingFriendRequests.filter(request => request.id !== receiver.id);
+        receiver.incomingFriendRequests = receiver.incomingFriendRequests?.filter(request => request.id !== sender.id);
+        sender.outgoingFriendRequests = sender.outgoingFriendRequests?.filter(request => request.id !== receiver.id);
 
+        sender.friends = sender.friends || [];
         sender.friends.push(receiver);
+
+        receiver.friends = receiver.friends || [];
         receiver.friends.push(sender);
 
         await this.userRepo.save(sender);
@@ -158,33 +180,39 @@ export class UserService {
     }
 
     async rejectFriendRequest(senderId: number, receiverId: number): Promise<void> {
-        const sender = await this.userRepo.findOne({ where: { id: senderId } });
+        const sender = await this.userRepo.findOne({ where: { id: senderId }, relations: ["outgoingFriendRequests"] });
         if (!sender) {
             throw new UnauthorizedException("Sender not found");
         }
 
-        const receiver = await this.userRepo.findOne({ where: { id: receiverId } });
+        const receiver = await this.userRepo.findOne({ where: { id: receiverId }, relations: ["incomingFriendRequests"] });
         if (!receiver) {
             throw new UnauthorizedException("Receiver not found");
         }
 
-        if (!receiver.incomingFriendRequests.some(request => request.id === sender.id)) {
+        const requestExists = await this.userRepo.createQueryBuilder('user')
+            .leftJoin('user.incomingFriendRequests', 'request')
+            .where('user.id = :receiverId', { receiverId: receiver.id})
+            .andWhere('request.id = :senderId', {senderId})
+            .getCount();
+
+        if(!requestExists) {
             throw new ConflictException("No friend request from this user");
         }
 
-        receiver.incomingFriendRequests = receiver.incomingFriendRequests.filter(request => request.id !== sender.id);
-        sender.outgoingFriendRequests = sender.outgoingFriendRequests.filter(request => request.id !== receiver.id);
-        await this.userRepo.save(sender);
+        receiver.incomingFriendRequests = receiver.incomingFriendRequests?.filter(request => request.id !== sender.id);
+        sender.outgoingFriendRequests = sender.outgoingFriendRequests?.filter(request => request.id !== receiver.id);
         await this.userRepo.save(receiver);
+        await this.userRepo.save(sender);
     }
 
     async deleteFriend(userId: number, friendId: number): Promise<void> {
-        const user = await this.userRepo.findOne({ where: { id: userId } });
+        const user = await this.userRepo.findOne({ where: { id: userId }, relations: ["friends"] });
         if (!user) {
             throw new UnauthorizedException("User not found");
         }
 
-        const friend = await this.userRepo.findOne({ where: { id: friendId } });
+        const friend = await this.userRepo.findOne({ where: { id: friendId }, relations: ["friends"] });
         if (!friend) {
             throw new UnauthorizedException("Friend not found");
         }
@@ -193,8 +221,8 @@ export class UserService {
             throw new ConflictException("This user is not your friend");
         }
 
-        user.friends = user.friends.filter(f => f.id !== friend.id);
-        friend.friends = friend.friends.filter(f => f.id !== user.id);
+        user.friends = user.friends?.filter(f => f.id !== friend.id);
+        friend.friends = friend.friends?.filter(f => f.id !== user.id);
 
         await this.userRepo.save(user);
         await this.userRepo.save(friend);
