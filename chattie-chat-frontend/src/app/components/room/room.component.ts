@@ -18,11 +18,11 @@ export class RoomComponent implements OnInit {
   roomId: number | null = null;
 
   constructor(private roomService: RoomService, private authService: AuthService, private socketService: SocketService, private route: ActivatedRoute) {
-    
+
   }
 
   async ngOnInit(): Promise<void> {
-      await this.loadRoom();
+    await this.loadRoom();
   }
 
   async loadRoom() {
@@ -31,7 +31,7 @@ export class RoomComponent implements OnInit {
       return null;
 
     const user = this.authService.currentUser;
-    if(!user)
+    if (!user)
       return null;
 
     this.roomId = Number(id);
