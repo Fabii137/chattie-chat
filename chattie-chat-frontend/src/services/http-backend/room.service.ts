@@ -9,15 +9,22 @@ export class RoomService {
     constructor(private http: HttpClient) { }
 
     openDMRoom(userAId: string, userBId: string): Observable<Room> {
-        const url = `${environment.apiURL}/open-dm`;
+        const url = `${environment.apiURL}dm/open`;
         return this.http.post<Room>(url, { userAId, userBId }).pipe(
             catchError(this.handleError)
         );
     }
 
     createGroupRoom(name: string, creatorId: number, userIds: number[]): Observable<Room> {
-        const url = `${environment.apiURL}/create-group`;
+        const url = `${environment.apiURL}groups/create`;
         return this.http.post<Room>(url, { name, creatorId, userIds }).pipe(
+            catchError(this.handleError)
+        );
+    }
+
+    createServerRoom(name: string, creatorId: number, serverId: number): Observable<Room> {
+        const url = `${environment.apiURL}servers/${serverId}/rooms/create`;
+        return this.http.post<Room>(url, { name, creatorId }).pipe(
             catchError(this.handleError)
         );
     }

@@ -1,13 +1,33 @@
 import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
-import { Repository } from "typeorm";
+import { Repository, In } from "typeorm";
 import { Room, RoomType } from "./room.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { User } from "../users/user.entity";
+import { Message } from "../messages/message.entity";
 
 @Injectable()
 export class RoomService {
     constructor(@InjectRepository(Room) private roomRepo: Repository<Room>,
-        @InjectRepository(User) private userRepo: Repository<User>) { }
+        @InjectRepository(User) private userRepo: Repository<User>,
+        @InjectRepository(Message) private messageRepo: Repository<Message>) { }
+
+    async getRoomById(roomId: number, userId: number): Promise<Room> {
+        const room = await this.roomRepo.findOne({where: {id: roomId}, relations: ["users"]});
+        if(!room) {
+            throw new UnauthorizedException("Room not found");
+        }
+
+        const user = await this.userRepo.findOne({where: {id: userId}});
+        if(!user) {
+            throw new UnauthorizedException("User not found");
+        }
+
+        if(!room.users.some(u => u === user)) {
+            throw new UnauthorizedException('User is not in this group')
+        }
+
+        return room;
+    }
 
     async findOrCreateDMRoom(userAId: number, userBId: number): Promise<Room> {
         if (userAId === userBId) {
@@ -50,7 +70,7 @@ export class RoomService {
             throw new UnauthorizedException("Creator not found");
         }
 
-        const users = await this.userRepo.findByIds(userIds);
+        const users = await this.userRepo.findBy({ id: In(userIds) });
         if (users.length === 0) {
             throw new UnauthorizedException("No users found for the group");
         }
@@ -80,8 +100,32 @@ export class RoomService {
             throw new UnauthorizedException("Only the creator can delete the room");
         }
         room.users = []; 
-        await this.roomRepo.save(room); // remove all users from the room
+        await this.roomRepo.save(room); // removes all user relations from the room
         
         await this.roomRepo.remove(room);
+    }
+
+    async addMessage(roomId: number, senderId: number, content: string): Promise<Message> {
+        const room = await this.roomRepo.findOne({where: {id: roomId}, relations: ["users", "messages"]});
+        if(!room) {
+            throw new UnauthorizedException("Room not found");
+        }
+
+        const sender = await this.userRepo.findOne({where: {id: senderId}});
+        if(!sender) {
+            throw new UnauthorizedException("User not found");
+        }
+
+        if(!room.users.some(u => u === sender)) {
+            throw new UnauthorizedException("User is not this room");
+        }
+
+        const message = this.messageRepo.create({
+            room,
+            sender,
+            content
+        })
+
+        return this.messageRepo.save(message);
     }
 }

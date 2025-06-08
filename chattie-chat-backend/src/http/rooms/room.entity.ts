@@ -11,11 +11,6 @@ export enum RoomType {
 
 @Entity({ name: 'rooms' })
 export class Room {
-    constructor() {
-        this.messages = [];
-        this.users = [];
-    }
-
     @PrimaryGeneratedColumn()
     id: number;
 

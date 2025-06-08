@@ -4,11 +4,6 @@ import { Room } from "../rooms/room.entity";
 
 @Entity({ name: 'servers' })
 export class ServerEntity {
-    constructor() {
-        this.users = [];
-        this.rooms = [];
-    }
-    
     @PrimaryGeneratedColumn()
     id: number;
 

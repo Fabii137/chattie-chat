@@ -5,13 +5,6 @@ import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGenerat
 
 @Entity({ name: 'users' })
 export class User {
-    constructor() {
-        this.friends = [];
-        this.incomingFriendRequests = [];
-        this.outgoingFriendRequests = [];
-        this.privateRooms = [];
-        this.servers = [];
-    }
     @PrimaryGeneratedColumn()
     id: number;
 
