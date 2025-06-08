@@ -5,6 +5,13 @@ import { Column, CreateDateColumn, Entity, JoinTable, ManyToMany, PrimaryGenerat
 
 @Entity({ name: 'users' })
 export class User {
+    constructor() {
+        this.friends = [];
+        this.incomingFriendRequests = [];
+        this.outgoingFriendRequests = [];
+        this.privateRooms = [];
+        this.servers = [];
+    }
     @PrimaryGeneratedColumn()
     id: number;
 
@@ -14,20 +21,20 @@ export class User {
     @Column({ unique: true })
     email: string;
 
-    @Column()
+    @Column({ select: false })
     password: string;
 
-    @Column({ nullable: true})
+    @Column({ nullable: true, default: "" })
     avatarUrl: string;
 
     @ManyToMany(() => User)
-    @JoinTable({'name': 'user_friends'})
+    @JoinTable({ 'name': 'user_friends' })
     friends: User[];
 
     @ManyToMany(() => User, (user) => user.outgoingFriendRequests)
-    @JoinTable({name: 'user_friend_requests'})
+    @JoinTable({ name: 'user_friend_requests' })
     incomingFriendRequests: User[];
-    
+
     @ManyToMany(() => User, (user) => user.incomingFriendRequests)
     outgoingFriendRequests: User[];
 

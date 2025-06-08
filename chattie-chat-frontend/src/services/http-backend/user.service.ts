@@ -3,10 +3,17 @@ import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
 import { User } from '../../entities/user.entity';
 import { environment } from '../../environments/environment';
+import { Server } from '../../entities/server.entity';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
   constructor(private http: HttpClient) {}
+
+  getServers(userId: number): Observable<Server[]> {
+    return this.http.get<Server[]>(`${environment.apiURL}users/${userId}/servers`).pipe(
+      catchError(this.handleError)
+    );
+  }
 
   getFriends(userId: number): Observable<User[]> {
     return this.http.get<User[]>(`${environment.apiURL}users/${userId}/friends`).pipe(

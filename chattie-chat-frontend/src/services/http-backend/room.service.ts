@@ -1,12 +1,11 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
-import { User } from '../../entities/user.entity';
 import { environment } from '../../environments/environment';
 import { Room } from '../../entities/room.entity';
 
 @Injectable({ providedIn: 'root' })
-export class UserService {
+export class RoomService {
     constructor(private http: HttpClient) { }
 
     openDMRoom(userAId: string, userBId: string): Observable<Room> {

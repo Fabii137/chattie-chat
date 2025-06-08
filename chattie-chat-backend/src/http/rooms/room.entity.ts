@@ -5,15 +5,21 @@ import { ServerEntity } from "../servers/server.entity";
 
 export enum RoomType {
     DM = 'dm',
-    GROUP = 'group'
+    GROUP = 'group',
+    SERVER = 'server'
 } 
 
 @Entity({ name: 'rooms' })
 export class Room {
+    constructor() {
+        this.messages = [];
+        this.users = [];
+    }
+
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column({default: 'New Room'})
     name: string;
 
     @Column({type: 'enum', enum: RoomType})

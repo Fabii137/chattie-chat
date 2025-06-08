@@ -6,12 +6,24 @@ import { RegisterDto } from "src/http/dtos/register.dto";
 import { LoginDto } from "src/http/dtos/login.dto";
 import * as bcrypt from 'bcrypt';
 import { SafeUser } from "src/http/dtos/safeUser.dto";
+import { ServerEntity } from "../servers/server.entity";
 
 @Injectable()
 export class UserService {
     constructor(@InjectRepository(User) private userRepo: Repository<User>) { }
 
-    async getFriends(userId: number): Promise<SafeUser[]> {
+    async getServers(userId: number): Promise<ServerEntity[]> {
+        const user = await this.userRepo.findOne({
+            where: { id: userId },
+            relations: ['servers']
+        });
+        if (!user) {
+            throw new UnauthorizedException("User not found");
+        }
+        return user.servers;
+    }
+
+    async getFriends(userId: number): Promise<User[]> {
         const user = await this.userRepo.findOne({
             where: { id: userId },
             relations: ['friends']
@@ -21,13 +33,10 @@ export class UserService {
             throw new UnauthorizedException("User not found");
         }
 
-        return user.friends.map(friend => {
-            const { password, ...safeFriend } = friend;
-            return safeFriend;
-        });
+        return user.friends;
     }
 
-    async getFriendRequests(userId: number): Promise<SafeUser[]> {
+    async getFriendRequests(userId: number): Promise<User[]> {
         const user = await this.userRepo.findOne({
             where: { id: userId },
             relations: ['incomingFriendRequests']
@@ -37,21 +46,20 @@ export class UserService {
             throw new UnauthorizedException("User not found");
         }
 
-        return user.incomingFriendRequests.map(request => {
-            const { password, ...safeRequest } = request;
-            return safeRequest;
-        });
+        return user.incomingFriendRequests;
     }
 
     async register(registerDto: RegisterDto): Promise<SafeUser | null> {
         const existingByEmail = await this.userRepo.findOne({ where: { email: registerDto.email } });
-        if (existingByEmail) 
+        if (existingByEmail) {
             throw new ConflictException('Email already in use');
-
+        }
+            
         const existingByUsername = await this.userRepo.findOne({ where: { username: registerDto.username } });
-        if (existingByUsername) 
+        if (existingByUsername) {
             throw new ConflictException('Username already taken');
-
+        }
+            
         const hashedPassword = await bcrypt.hash(registerDto.password, 10);
 
         const user = this.userRepo.create({
@@ -62,9 +70,10 @@ export class UserService {
         });
 
         const savedUser = await this.userRepo.save(user);
-
-        const { password, ...safeUser } = savedUser;
-        return safeUser;
+        if (!savedUser) {
+            throw new ConflictException('User registration failed');
+        }
+        return this.toSafeUser(savedUser);
     }
 
 
@@ -82,8 +91,8 @@ export class UserService {
 
         user.isOnline = true;
         await this.userRepo.save(user);
-        const { password, ...safeUser } = user;
-        return safeUser;
+
+        return this.toSafeUser(user);
     }
 
     async sendFriendRequest(senderId: number, receiverName: string): Promise<void> {
@@ -92,21 +101,26 @@ export class UserService {
             throw new UnauthorizedException("Sender not found");
 
         const receiver = await this.userRepo.findOne({ where: { username: receiverName } });
-        if (!receiver)
+        if (!receiver) {
             throw new UnauthorizedException("Receiver not found");
-
-        if (sender.id === receiver.id)
+        }
+            
+        if (sender.id === receiver.id) {
             throw new ConflictException("You cannot send a friend request to yourself");
-
-        if (sender.friends.some(friend => friend.id === receiver.id))
+        }
+            
+        if (sender.friends.some(friend => friend.id === receiver.id)) {
             throw new ConflictException("You are already friends with this user");
-
-        if (receiver.incomingFriendRequests.some(request => request.id === sender.id))
+        }
+            
+        if (receiver.incomingFriendRequests.some(request => request.id === sender.id)) {
             throw new ConflictException("Friend request already sent");
-
-        if(sender.outgoingFriendRequests.some(request => request.id === receiver.id))
+        }
+        
+        if(sender.outgoingFriendRequests.some(request => request.id === receiver.id)) {
             throw new ConflictException("You have already sent a friend request to this user");
-
+        }
+            
         sender.outgoingFriendRequests.push(receiver);
         receiver.incomingFriendRequests.push(sender);
 
@@ -116,16 +130,19 @@ export class UserService {
 
     async acceptFriendRequest(senderId: number, receiverId: number): Promise<void> {
         const sender = await this.userRepo.findOne({ where: { id: senderId } });
-        if (!sender)
+        if (!sender) {
             throw new UnauthorizedException("Sender not found");
-
+        }
+            
         const receiver = await this.userRepo.findOne({ where: { id: receiverId } });
-        if (!receiver)
+        if (!receiver) {
             throw new UnauthorizedException("Receiver not found");
-
-        if (!receiver.incomingFriendRequests.some(request => request.id === sender.id))
+        }
+            
+        if (!receiver.incomingFriendRequests.some(request => request.id === sender.id)) {
             throw new ConflictException("No friend request from this user");
-
+        }
+            
         receiver.incomingFriendRequests = receiver.incomingFriendRequests.filter(request => request.id !== sender.id);
         sender.outgoingFriendRequests = sender.outgoingFriendRequests.filter(request => request.id !== receiver.id);
 
@@ -138,16 +155,19 @@ export class UserService {
 
     async rejectFriendRequest(senderId: number, receiverId: number): Promise<void> {
         const sender = await this.userRepo.findOne({ where: { id: senderId } });
-        if (!sender)
+        if (!sender) {
             throw new UnauthorizedException("Sender not found");
-
+        }
+            
         const receiver = await this.userRepo.findOne({ where: { id: receiverId } });
-        if (!receiver)
+        if (!receiver) {
             throw new UnauthorizedException("Receiver not found");
-
-        if (!receiver.incomingFriendRequests.some(request => request.id === sender.id))
+        }
+            
+        if (!receiver.incomingFriendRequests.some(request => request.id === sender.id)) {
             throw new ConflictException("No friend request from this user");
-
+        }
+            
         receiver.incomingFriendRequests = receiver.incomingFriendRequests.filter(request => request.id !== sender.id);
         sender.outgoingFriendRequests = sender.outgoingFriendRequests.filter(request => request.id !== receiver.id);
         await this.userRepo.save(sender);
@@ -156,16 +176,19 @@ export class UserService {
 
     async deleteFriend(userId: number, friendId: number): Promise<void> {
         const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (!user)
+        if (!user) {
             throw new UnauthorizedException("User not found");
-
+        }
+            
         const friend = await this.userRepo.findOne({ where: { id: friendId } });
-        if (!friend)
+        if (!friend) {
             throw new UnauthorizedException("Friend not found");
-
-        if (!user.friends.some(f => f.id === friend.id))
+        }
+            
+        if (!user.friends.some(f => f.id === friend.id)) {
             throw new ConflictException("This user is not your friend");
-
+        }
+            
         user.friends = user.friends.filter(f => f.id !== friend.id);
         friend.friends = friend.friends.filter(f => f.id !== user.id);
 
@@ -175,7 +198,13 @@ export class UserService {
 
     async setOffline(userId: number): Promise<void> {
         const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (user)
+        if (user) {
             await this.userRepo.update(userId, { isOnline: false });
+        }
+    }
+
+    toSafeUser(user: User): SafeUser {
+        const { password, ...safeUser } = user;
+        return safeUser;
     }
 }

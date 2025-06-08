@@ -15,5 +15,6 @@ export interface Room {
 
 export enum RoomType {
     DM = "dm",
-    GROUP = "group"
-};
+    GROUP = "group",
+    SERVER = "server",
+}

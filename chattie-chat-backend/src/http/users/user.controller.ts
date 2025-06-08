@@ -3,18 +3,25 @@ import { UserService } from "./user.service";
 import { RegisterDto } from "src/http/dtos/register.dto";
 import { LoginDto } from "src/http/dtos/login.dto";
 import { SafeUser } from "../dtos/safeUser.dto";
+import { User } from "./user.entity";
+import { ServerEntity } from "../servers/server.entity";
 
 @Controller('users')
 export class UserController {
     constructor(private userService: UserService) { }
 
+    @Get(':userId/servers')
+    async getServers(@Param('userId', ParseIntPipe) userId: number): Promise<ServerEntity[]> {
+        return this.userService.getServers(userId);
+    }
+
     @Get(':userId/friends')
-    async getFriends(@Param('userId', ParseIntPipe) userId: number): Promise<SafeUser[]> {
+    async getFriends(@Param('userId', ParseIntPipe) userId: number): Promise<User[]> {
         return this.userService.getFriends(userId);
     }
 
     @Get(':userId/friend-requests')
-    async getFriendRequests(@Param('userId', ParseIntPipe) userId: number): Promise<SafeUser[]> {
+    async getFriendRequests(@Param('userId', ParseIntPipe) userId: number): Promise<User[]> {
         return this.userService.getFriendRequests(userId);
     }
 

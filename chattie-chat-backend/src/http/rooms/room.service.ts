@@ -10,13 +10,17 @@ export class RoomService {
         @InjectRepository(User) private userRepo: Repository<User>) { }
 
     async findOrCreateDMRoom(userAId: number, userBId: number): Promise<Room> {
-        let existingRoom = await this.roomRepo.createQueryBuilder("room")
+        if (userAId === userBId) {
+            throw new ConflictException("Cannot create a DM room with the same user");
+        }
+
+        let existingRooms = await this.roomRepo.createQueryBuilder("room")
             .leftJoinAndSelect("room.users", "user")
             .where("room.type = :type", { type: RoomType.DM })
             .andWhere("(user.id = :userAId OR user.id = :userBId)", { userAId, userBId })
             .getMany();
 
-        const matched = existingRoom.find(room => {
+        const matched = existingRooms.find(room => {
             return room.users.length === 2 && room.users.some(u => u.id === userAId) && room.users.some(u => u.id === userBId);
         })
 
