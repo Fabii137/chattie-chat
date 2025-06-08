@@ -10,6 +10,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { RoomService } from '../../../services/http-backend/room.service';
 
 type FriendSection = 'online' | 'all' | 'requests' | 'add';
 
@@ -29,7 +31,7 @@ export class FriendsComponent {
 
   user: User | null = null;
 
-  constructor(private userService: UserService, authService: AuthService, private confirmDialogService: ConfirmDialogService, private snackBar: MatSnackBar) {
+  constructor(private userService: UserService, private roomService: RoomService, authService: AuthService, private confirmDialogService: ConfirmDialogService, private snackBar: MatSnackBar, private router: Router) {
     this.user = authService.currentUser;
     this.loadFriends();
     this.loadFriendRequests();
@@ -150,6 +152,15 @@ export class FriendsComponent {
         this.openSnackbar(error.message || 'Error rejecting friend request');
       }
     });
+  }
+
+  openChat(friend: User) {
+    if(!this.user)
+      return;
+
+    this.roomService.openDMRoom(this.user.id, friend.id).subscribe(room => {
+      this.router.navigate(['room', room.id]);
+    })
   }
 
   getAvatar(user: User): string {
