@@ -37,6 +37,8 @@ export class FriendsComponent {
 
   showSection(section: FriendSection): void {
     this.activeSection = section;
+    this.loadFriendRequests();
+    this.loadFriends();
   }
 
   deleteFriend(friend: User): void {
@@ -121,7 +123,7 @@ export class FriendsComponent {
       return;
     }
 
-    this.userService.acceptFriendRequest(this.user.id, request.id).subscribe({
+    this.userService.acceptFriendRequest(request.id, this.user.id).subscribe({
       next: () => {
         this.loadFriendRequests();
         this.loadFriends();
