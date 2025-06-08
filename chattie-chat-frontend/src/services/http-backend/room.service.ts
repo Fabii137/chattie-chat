@@ -15,7 +15,7 @@ export class RoomService {
         );
     }
 
-    openDMRoom(userAId: string, userBId: string): Observable<Room> {
+    openDMRoom(userAId: number, userBId: number): Observable<Room> {
         const url = `${environment.apiURL}dm/open`;
         return this.http.post<Room>(url, { userAId, userBId }).pipe(
             catchError(this.handleError)
