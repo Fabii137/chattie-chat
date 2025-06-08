@@ -2,10 +2,12 @@ import { Routes } from '@angular/router';
 import { FriendsComponent } from './components/friends/friends.component';
 import { LoginComponent } from './components/login/login.component';
 import { AuthGuard } from '../guards/auth.guard';
+import { RoomComponent } from './components/room/room.component';
 
 export const routes: Routes = [
     { path: '', redirectTo: 'friends', pathMatch: 'full'},
     { path: 'friends', component: FriendsComponent, title: 'Friends', canActivate: [AuthGuard]},
     { path: 'login', component: LoginComponent, title: 'Login'},
+    { path: 'room/:roomId', component: RoomComponent, title: 'Room', canActivate: [AuthGuard]},
     { path: '**', redirectTo: 'friends'}
 ];
