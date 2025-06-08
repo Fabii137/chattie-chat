@@ -8,6 +8,13 @@ import { Room } from '../../entities/room.entity';
 export class RoomService {
     constructor(private http: HttpClient) { }
 
+    getRoomById(roomId: number, userId:number): Observable<Room> {
+        const url = `${environment.apiURL}rooms/${roomId}/${userId}`;
+        return this.http.get<Room>(url).pipe(
+            catchError(this.handleError)
+        );
+    }
+
     openDMRoom(userAId: string, userBId: string): Observable<Room> {
         const url = `${environment.apiURL}dm/open`;
         return this.http.post<Room>(url, { userAId, userBId }).pipe(
