@@ -7,7 +7,7 @@ export class Message {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ name: 'content' })
+    @Column()
     content: string;
 
     @ManyToOne(() => User)
