@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
+import { Message } from '../entities/message.entity';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {
@@ -10,17 +11,17 @@ export class SocketService {
     this.socket = io('http://localhost:3000');
   }
 
-  joinRoom(roomId: string) {
+  joinRoom(roomId: number) {
     this.socket.emit('join-room', roomId);
   }
 
-  sendMessage(roomId: string, message: any) {
-    this.socket.emit('send-message', { roomId, message });
+  sendMessage(roomId: number, senderId: number, message: string) {
+    this.socket.emit('send-message', { roomId, senderId, message });
   }
 
-  onMessage(): Observable<any> {
+  onMessage(): Observable<Message> {
     return new Observable(observer => {
-      this.socket.on('receive-message', (message) => {
+      this.socket.on('receive-message', (message: Message) => {
         observer.next(message);
       });
     });
