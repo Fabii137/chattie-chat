@@ -8,7 +8,7 @@ export class RoomController {
     constructor(private roomService: RoomService) { }
 
     @Get(':roomId/:userId')
-    async getRoomById(@Param('roomid', ParseIntPipe) roomId: number, @Param('userId', ParseIntPipe) userId: number): Promise<Room> {
+    async getRoomById(@Param('roomId', ParseIntPipe) roomId: number, @Param('userId', ParseIntPipe) userId: number): Promise<Room> {
         if(!roomId || !userId) {
             throw new BadRequestException("Mising roomId or userId in request");
         }

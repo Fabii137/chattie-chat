@@ -1,4 +1,5 @@
 import { Room } from "./room.entity";
+import { Server } from "./server.entity";
 
 export interface User {
     id: number;
@@ -9,7 +10,7 @@ export interface User {
     incomingFriendRequests: User[];
     outgoingFriendRequests: User[];
     privateRooms: Room[];
-    servers: number[];
+    servers: Server[];
     createdAt: Date;
     isOnline: boolean;
 }

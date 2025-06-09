@@ -19,7 +19,11 @@ export class UserService {
                 "incomingFriendRequests",
                 "outgoingFriendRequests",
                 "privateRooms",
-                "servers"
+                "privateRooms.users",
+                "privateRooms.messages",
+                "servers",
+                "servers.users",
+                "servers.rooms"
             ]
         });
                 

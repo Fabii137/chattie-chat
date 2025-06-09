@@ -1,15 +1,41 @@
 <mat-drawer-container class="room-container" autosize>
     <mat-drawer #drawer class="room-sidenav" mode="side" opened>
-        <div class="room-list" *ngIf="currentUser && room">
-            <div *ngFor="let room of currentUser.privateRooms" class="room">
-                {{room.name}}
+        <div class="room-list" *ngIf="currentUser && currentUser.privateRooms; else error">
+            <div *ngFor="let room of currentUser.privateRooms" class="room" [class.selected]="room.id === roomId"
+                (click)="selectRoom(room)">
+                <img *ngIf="getRoomIcon(room)" [src]="getRoomIcon(room)" alt="room icon" />
+                {{ room.name }}
             </div>
         </div>
+        <ng-template #error>
+            <div class="error-msg">No rooms found or error loading user</div>
+        </ng-template>
     </mat-drawer>
 
     <mat-drawer-content class="room-content">
-        <div class="content-area">
-            
+        <div class="chat" #chatContainer>
+            <div *ngFor="let message of messages" class="chat-message">
+                <div class="sender">
+                    <img [src]="message.sender.avatarUrl || 'assets/img/default.jpg'" alt="">
+                    <strong>{{ message.sender.username }}</strong>
+                </div>
+                <div class="message-text">
+                    {{ message.content }}
+                </div>
+                <div class="timestamp">
+                    {{ message.timestamp | date:'shortTime' }}
+                </div>
+            </div>
+        </div>
+
+        <div class="input">
+            <mat-form-field class="message-input" appearance="fill">
+                <mat-label>Message</mat-label>
+                <input matInput [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" type="text" autocomplete="off" />
+            </mat-form-field>
+            <button mat-icon-button color="primary" (click)="sendMessage()" aria-label="Send message">
+                <mat-icon>send</mat-icon>
+            </button>
         </div>
     </mat-drawer-content>
 </mat-drawer-container>

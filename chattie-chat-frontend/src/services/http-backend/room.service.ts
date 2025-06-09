@@ -8,7 +8,7 @@ import { Room } from '../../entities/room.entity';
 export class RoomService {
     constructor(private http: HttpClient) { }
 
-    getRoomById(roomId: number, userId:number): Observable<Room> {
+    getRoomById(roomId: number, userId: number): Observable<Room> {
         const url = `${environment.apiURL}rooms/${roomId}/${userId}`;
         return this.http.get<Room>(url).pipe(
             catchError(this.handleError)
@@ -45,7 +45,7 @@ export class RoomService {
         } else {
             errorMessage = `Server returned code: ${error.status}`;
         }
-        console.error('UserService Error:', errorMessage);
+        console.error('RoomService Error:', errorMessage);
 
         return throwError(() => new Error(errorMessage));
     }

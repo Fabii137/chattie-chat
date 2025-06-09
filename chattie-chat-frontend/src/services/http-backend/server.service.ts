@@ -53,7 +53,7 @@ export class ServerService {
         } else {
             errorMessage = `Server returned code: ${error.status}`;
         }
-        console.error('UserService Error:', errorMessage);
+        console.error('ServerService Error:', errorMessage);
 
         return throwError(() => new Error(errorMessage));
     }

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { Message } from '../entities/message.entity';
 
 @Injectable({ providedIn: 'root' })
@@ -8,8 +8,12 @@ export class SocketService {
   private socket: Socket;
 
   constructor() {
-    this.socket = io('api', {
+    this.socket = io('/api', {
       path: '/socket.io'
+    });
+
+    this.socket.on('connect', () => {
+      console.log('Socket connected:', this.socket.id);
     });
   }
 

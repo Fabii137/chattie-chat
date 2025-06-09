@@ -12,7 +12,7 @@ export class RoomService {
         @InjectRepository(Message) private messageRepo: Repository<Message>) { }
 
     async getRoomById(roomId: number, userId: number): Promise<Room> {
-        const room = await this.roomRepo.findOne({where: {id: roomId}, relations: ["users"]});
+        const room = await this.roomRepo.findOne({where: {id: roomId}, relations: ["users", "messages"]});
         if(!room) {
             throw new UnauthorizedException("Room not found");
         }
@@ -21,9 +21,9 @@ export class RoomService {
         if(!user) {
             throw new UnauthorizedException("User not found");
         }
-
-        if(!room.users.some(u => u === user)) {
-            throw new UnauthorizedException('User is not in this group')
+        console.log({room, users: room.users})
+        if(!room.users.some(u => u.id === userId)) {
+            throw new UnauthorizedException('User is not in this room')
         }
 
         return room;
