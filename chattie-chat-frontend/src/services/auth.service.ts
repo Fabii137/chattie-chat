@@ -57,7 +57,7 @@ export class AuthService {
     if(!this.currentUser)
       return;
 
-    this.userService.setOffline(this.currentUser);
+    this.userService.setOffline(this.currentUser.id);
     this.deleteSavedCredentials();
     this.currentUser = null;
     this.router.navigate(['login']);
@@ -65,7 +65,10 @@ export class AuthService {
 
   setOffline() {
     const user = this.currentUser;
-    this.userService.setOffline(user);
+    if(!user)
+      return;
+
+    this.userService.setOffline(user.id);
   }
 
   saveCredentials(email: string, password: string) {

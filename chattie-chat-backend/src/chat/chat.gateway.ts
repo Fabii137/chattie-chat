@@ -2,7 +2,9 @@ import { ConnectedSocket, MessageBody, OnGatewayConnection, OnGatewayDisconnect,
 import { Server, Socket } from "socket.io";
 import { RoomService } from "src/http/rooms/room.service";
 
-@WebSocketGateway()
+@WebSocketGateway({
+    path: '/socket.io'
+})
 export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server

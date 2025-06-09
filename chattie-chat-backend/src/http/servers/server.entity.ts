@@ -10,7 +10,7 @@ export class ServerEntity {
     @Column()
     name: string;
 
-    @ManyToMany(() => User)
+    @ManyToMany(() => User, (user) => user.servers)
     @JoinTable({ name: 'server_users' })
     users: User[];
 

@@ -26,7 +26,7 @@ export class Room {
     @ManyToOne(() => ServerEntity, (server) => server.rooms, {nullable: true})
     server: ServerEntity | null;
 
-    @ManyToMany(() => User)
+    @ManyToMany(() => User, (user) => user.privateRooms)
     @JoinTable({ name: 'room_users' })
     users: User[];
 

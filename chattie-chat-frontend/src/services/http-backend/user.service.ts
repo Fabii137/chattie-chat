@@ -7,16 +7,10 @@ import { Server } from '../../entities/server.entity';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  getServers(userId: number): Observable<Server[]> {
-    return this.http.get<Server[]>(`${environment.apiURL}users/${userId}/servers`).pipe(
-      catchError(this.handleError)
-    );
-  }
-
-  getFriends(userId: number): Observable<User[]> {
-    return this.http.get<User[]>(`${environment.apiURL}users/${userId}/friends`).pipe(
+  getUserById(userId: number): Observable<User> {
+    return this.http.get<User>(`${environment.apiURL}users/${userId}`).pipe(
       catchError(this.handleError)
     );
   }
@@ -39,10 +33,16 @@ export class UserService {
     );
   }
 
-  setOffline(user: User | null): void {
-    if (!user || !user.id) 
+  setOffline(userId: number): void {
+    if (!userId)
       return;
-    navigator.sendBeacon(`${environment.apiURL}users/set-offline`, JSON.stringify({ userId: user.id }));
+
+    const url = `${environment.apiURL}users/set-offline`;
+    const data = JSON.stringify({ userId });
+    //sends blob because sendBeacon doesn't let you set headers
+    const blob = new Blob([data], { type: 'application/json' });
+
+    navigator.sendBeacon(url, blob);
   }
 
   sendFriendRequest(senderId: number, receiverName: string): Observable<void> {
@@ -79,7 +79,7 @@ export class UserService {
       errorMessage = `Server returned code: ${error.status}`;
     }
     console.error('UserService Error:', errorMessage);
-    
+
     return throwError(() => new Error(errorMessage));
   }
 }

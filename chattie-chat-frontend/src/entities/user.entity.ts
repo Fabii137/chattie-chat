@@ -1,3 +1,5 @@
+import { Room } from "./room.entity";
+
 export interface User {
     id: number;
     username: string;
@@ -6,7 +8,7 @@ export interface User {
     friends: User[];
     incomingFriendRequests: User[];
     outgoingFriendRequests: User[];
-    privateRooms: number[];
+    privateRooms: Room[];
     servers: number[];
     createdAt: Date;
     isOnline: boolean;

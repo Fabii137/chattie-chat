@@ -16,14 +16,14 @@ export class RoomService {
     }
 
     openDMRoom(userAId: number, userBId: number): Observable<Room> {
-        const url = `${environment.apiURL}dm/open`;
+        const url = `${environment.apiURL}rooms/dm/open`;
         return this.http.post<Room>(url, { userAId, userBId }).pipe(
             catchError(this.handleError)
         );
     }
 
     createGroupRoom(name: string, creatorId: number, userIds: number[]): Observable<Room> {
-        const url = `${environment.apiURL}groups/create`;
+        const url = `${environment.apiURL}rooms/groups/create`;
         return this.http.post<Room>(url, { name, creatorId, userIds }).pipe(
             catchError(this.handleError)
         );

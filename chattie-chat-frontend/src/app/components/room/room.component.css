@@ -1,0 +1,26 @@
+.room-container {
+    height: 100%;
+    display: flex;
+}
+
+.room-sidenav {
+    width: 100px;
+    background-color: #1a1b1d;
+    color: white;
+    border-right: 1px solid var(--mat-sys-outline);
+    padding: 8px 0;
+    overflow-y: auto;
+}
+
+
+.room-content {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+}
+
+.content-area {
+    overflow-y: auto;
+    flex: 1;
+}

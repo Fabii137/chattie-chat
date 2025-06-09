@@ -10,14 +10,9 @@ import { ServerEntity } from "../servers/server.entity";
 export class UserController {
     constructor(private userService: UserService) { }
 
-    @Get(':userId/servers')
-    async getServers(@Param('userId', ParseIntPipe) userId: number): Promise<ServerEntity[]> {
-        return this.userService.getServers(userId);
-    }
-
-    @Get(':userId/friends')
-    async getFriends(@Param('userId', ParseIntPipe) userId: number): Promise<User[]> {
-        return this.userService.getFriends(userId);
+    @Get(':userId')
+    async getUserById(@Param('userId', ParseIntPipe) userId: number): Promise<User> {
+        return this.userService.getUserById(userId);
     }
 
     @Get(':userId/friend-requests')
@@ -36,14 +31,19 @@ export class UserController {
     }
 
     @Post('set-offline')
-    async setOffline(@Body() userId: number): Promise<void> {
-        return this.userService.setOffline(userId);
+    async setOffline(@Body() body: { userId: number }): Promise<void> {
+        if(!body || !body.userId) {
+            console.error(body);
+            throw new BadRequestException('Missing userId in request.');
+        }
+            
+        return this.userService.setOffline(body.userId);
     }
 
     @Post('send-friend-request')
     async sendFriendRequest(@Body() body: {senderId: number, receiverName: string}): Promise<void> {
         if(!body || !body.senderId || !body.receiverName) 
-            throw new BadRequestException('Missing senderId or receiverName in request body.');
+            throw new BadRequestException('Missing senderId or receiverName in request.');
         
         return this.userService.sendFriendRequest(body.senderId, body.receiverName);
     }

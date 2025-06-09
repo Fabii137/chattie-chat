@@ -12,28 +12,22 @@ import { ServerEntity } from "../servers/server.entity";
 export class UserService {
     constructor(@InjectRepository(User) private userRepo: Repository<User>) { }
 
-    async getServers(userId: number): Promise<ServerEntity[]> {
-        const user = await this.userRepo.findOne({
-            where: { id: userId },
-            relations: ['servers']
+    async getUserById(userId: number): Promise<User> {
+        const user = await this.userRepo.findOne({where: {id: userId}, 
+            relations: [ 
+                "friends",
+                "incomingFriendRequests",
+                "outgoingFriendRequests",
+                "privateRooms",
+                "servers"
+            ]
         });
-        if (!user) {
-            throw new UnauthorizedException("User not found");
-        }
-        return user.servers;
-    }
-
-    async getFriends(userId: number): Promise<User[]> {
-        const user = await this.userRepo.findOne({
-            where: { id: userId },
-            relations: ['friends']
-        });
-
-        if (!user) {
+                
+        if(!user) {
             throw new UnauthorizedException("User not found");
         }
 
-        return user.friends;
+        return user;
     }
 
     async getFriendRequests(userId: number): Promise<User[]> {

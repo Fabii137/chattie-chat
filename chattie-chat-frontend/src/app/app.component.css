@@ -38,17 +38,3 @@ mat-toolbar {
     overflow-y: auto;
     flex: 1;
 }
-
-.hide-desktop {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    .app-sidenav {
-        width: 100px;
-    }
-
-    .hide-desktop {
-        display: inline-flex;
-    }
-}

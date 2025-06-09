@@ -1,1 +1,15 @@
-<p>room works!</p>
+<mat-drawer-container class="room-container" autosize>
+    <mat-drawer #drawer class="room-sidenav" mode="side" opened>
+        <div class="room-list" *ngIf="currentUser && room">
+            <div *ngFor="let room of currentUser.privateRooms" class="room">
+                {{room.name}}
+            </div>
+        </div>
+    </mat-drawer>
+
+    <mat-drawer-content class="room-content">
+        <div class="content-area">
+            
+        </div>
+    </mat-drawer-content>
+</mat-drawer-container>

@@ -92,10 +92,12 @@ export class FriendsComponent {
       return;
     }
 
-    this.userService.getFriends(this.user.id).subscribe({
-      next: (friends: User[]) => {
-        this.friends = friends;
-        this.onlineFriends = friends.filter(friend => friend.isOnline);
+    this.userService.getUserById(this.user.id).subscribe({
+      next: (user: User) => {
+        this.user = user;
+        console.log(user.friends);
+        this.friends = user.friends;
+        this.onlineFriends = this.friends.filter(friend => friend.isOnline);
       },
       error: (error) => {
         console.error('Error loading friends:', error);

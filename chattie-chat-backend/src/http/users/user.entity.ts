@@ -34,10 +34,10 @@ export class User {
     @Column()
     isOnline: boolean;
 
-    @ManyToMany(() => Room)
+    @ManyToMany(() => Room, (room) => room.users)
     privateRooms: Room[];
 
-    @ManyToMany(() => ServerEntity)
+    @ManyToMany(() => ServerEntity, (server) => server.users)
     servers: ServerEntity[];
 
     @CreateDateColumn()
