@@ -2,16 +2,17 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
 import { Message } from '../entities/message.entity';
+import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SocketService {
   private socket: Socket | null = null;
 
-  constructor() {}
+  constructor() { }
 
   connect() {
     this.socket = io('/', {
-      path: '/socket.io'
+      path: `${environment.socketURL}socket.io`
     });
 
     this.socket.on('connect', () => {
@@ -20,7 +21,7 @@ export class SocketService {
   }
 
   disconnect() {
-    if(this.socket) {
+    if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
     }
