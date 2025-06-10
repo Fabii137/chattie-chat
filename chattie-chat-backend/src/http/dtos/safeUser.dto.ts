@@ -9,6 +9,8 @@ export interface SafeUser {
   avatarUrl: string;
   isOnline: boolean;
   friends: User[];
+  incomingFriendRequests: User[];
+  outgoingFriendRequests: User[];
   privateRooms: Room[];
   servers: ServerEntity[];
   createdAt: Date;

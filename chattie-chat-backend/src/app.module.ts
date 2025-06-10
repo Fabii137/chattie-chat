@@ -25,7 +25,7 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         synchronize: true,
-        logging: ['query', 'error'],
+        logging: ['error'],
         autoLoadEntities: true,
         namingStrategy: new SnakeNamingStrategy(),
       }),

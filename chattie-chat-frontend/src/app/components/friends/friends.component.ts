@@ -95,7 +95,6 @@ export class FriendsComponent {
     this.userService.getUserById(this.user.id).subscribe({
       next: (user: User) => {
         this.user = user;
-        console.log(user.friends);
         this.friends = user.friends;
         this.onlineFriends = this.friends.filter(friend => friend.isOnline);
       },
@@ -161,7 +160,7 @@ export class FriendsComponent {
       return;
 
     this.roomService.openDMRoom(this.user.id, friend.id).subscribe(room => {
-      this.router.navigate(['room', room.id]);
+      this.router.navigate(['rooms', room.id]);
     })
   }
 
