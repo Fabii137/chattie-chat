@@ -33,8 +33,6 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     async handleMessage(@MessageBody() payload: { roomId: number, senderId: number, message: string }, @ConnectedSocket() client: Socket) {
         try {
             const savedMessage = await this.roomService.addMessage(payload.roomId, payload.senderId, payload.message);
-            console.log(savedMessage);
-
             this.server.to(payload.roomId.toString()).emit('receive-message', savedMessage);
         } catch (error) {
             console.error('Error saving message', error)
