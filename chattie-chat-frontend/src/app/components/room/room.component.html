@@ -1,29 +1,34 @@
 <mat-drawer-container class="room-container" autosize>
     <mat-drawer #drawer class="room-sidenav" mode="side" opened>
-        <div class="room-list" *ngIf="currentUser && currentUser.privateRooms; else error">
+        <div class="new-group-btn">
+            <button mat-flat-button color="primary" (click)="openNewGroupDialog()">
+                <mat-icon>add</mat-icon>
+                New Group
+            </button>
+        </div>
+        <div class="room-list" *ngIf="currentUser && currentUser.privateRooms">
             <div *ngFor="let room of currentUser.privateRooms" class="room" [class.selected]="room.id === roomId"
                 (click)="selectRoom(room)">
                 <img *ngIf="getRoomIcon(room)" [src]="getRoomIcon(room)" alt="room icon" />
                 {{ room.name }}
             </div>
         </div>
-        <ng-template #error>
-            <div class="error-msg">No rooms found or error loading user</div>
-        </ng-template>
     </mat-drawer>
 
-    <mat-drawer-content class="room-content">
+    <mat-drawer-content class="room-content" *ngIf="room">
         <div class="chat" #chatContainer>
-            <div *ngFor="let message of messages" class="chat-message">
-                <div class="sender">
-                    <img [src]="message.sender.avatarUrl || 'assets/img/default.jpg'" alt="">
-                    <strong>{{ message.sender.username }}</strong>
-                </div>
-                <div class="message-text">
-                    {{ message.content }}
-                </div>
-                <div class="timestamp">
-                    {{ message.timestamp | date:'shortTime' }}
+            <div *ngFor="let message of messages" class="chat-message"
+                [class.own-message]="message.sender.id === currentUser?.id">
+                <img class="sender-avatar" [src]="message.sender.avatarUrl || 'assets/img/default.jpg'" alt="Avatar">
+
+                <div class="message-content">
+                    <div class="message-header">
+                        <strong>{{ message.sender.username }}</strong>
+                        <span class="timestamp">{{ message.timestamp | date:'shortTime' }}</span>
+                    </div>
+                    <div class="message-text">
+                        {{ message.content }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -33,7 +38,7 @@
                 <mat-label>Message</mat-label>
                 <input matInput [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" type="text" autocomplete="off" />
             </mat-form-field>
-            <button mat-icon-button color="primary" (click)="sendMessage()" aria-label="Send message">
+            <button class="send-btn" mat-icon-button color="primary" (click)="sendMessage()" aria-label="Send message">
                 <mat-icon>send</mat-icon>
             </button>
         </div>

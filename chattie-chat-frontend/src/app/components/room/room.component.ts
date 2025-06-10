@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Room, RoomType } from '../../../entities/room.entity';
 import { RoomService } from '../../../services/http-backend/room.service';
 import { SocketService } from '../../../services/socket.service';
@@ -14,6 +14,8 @@ import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { Message } from '../../../entities/message.entity';
+import { MatDialog } from '@angular/material/dialog';
+import { NewGroupDialogComponent } from './new-group-dialog/new-group-dialog.component';
 
 @Component({
   selector: 'app-room',
@@ -29,7 +31,7 @@ import { Message } from '../../../entities/message.entity';
   templateUrl: './room.component.html',
   styleUrls: ['./room.component.css'],
 })
-export class RoomComponent implements OnInit {
+export class RoomComponent implements OnInit, OnDestroy {
   @ViewChild('chatContainer') chatContainer!: ElementRef;
   room: Room | null = null;
   roomId: number | null = null;
@@ -38,6 +40,7 @@ export class RoomComponent implements OnInit {
   currentUser: User | null = null;
 
   private messageSubscripion: Subscription | null = null;
+  private routeSubscription?: Subscription;
   newMessage: string = '';
 
   constructor(
@@ -46,23 +49,24 @@ export class RoomComponent implements OnInit {
     private authService: AuthService,
     private socketService: SocketService,
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private matDialog: MatDialog
   ) { }
 
   async ngOnInit(): Promise<void> {
     await this.loadCurrentUser();
-    await this.loadRoom();
-    if(this.room && this.room.id) {
-      this.socketService.joinRoom(this.room.id);
-      this.messageSubscripion?.unsubscribe();
-      this.messageSubscripion = this.socketService.onMessage().subscribe((message: Message) => {
-        if(message.room.id === this.roomId) {
-          this.messages.push(message);
-          this.scrollToBottom();
-        }
-      });
-    }
-      
+    this.routeSubscription = this.route.paramMap.subscribe(async paramMap => {
+      const roomIdStr = paramMap.get('roomId');
+      if(!roomIdStr)
+        return;
+      this.roomId = Number(roomIdStr);
+      await this.loadRoom(this.roomId);
+      this.setupSocket(this.roomId);
+    })
+  }
+
+  ngOnDestroy(): void {
+    this.socketService.disconnect();
   }
 
   async loadCurrentUser() {
@@ -73,19 +77,26 @@ export class RoomComponent implements OnInit {
     this.currentUser = await firstValueFrom(this.userService.getUserById(user.id));
   }
 
-  async loadRoom() {
-    const id = this.route.snapshot.paramMap.get("roomId");
-    if (!id)
+  private async loadRoom(roomId: number) {
+    if (!this.currentUser) 
       return;
 
-    const user = this.authService.currentUser;
-    if (!user)
-      return;
+    this.room = await firstValueFrom(this.roomService.getRoomById(roomId, this.currentUser.id));
+    this.messages = (this.room.messages ?? []).sort((a, b) =>
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    this.scrollToBottom();
+  }
 
-    this.roomId = Number(id);
-
-    this.room = await firstValueFrom(this.roomService.getRoomById(this.roomId, user.id));
-    this.messages = this.room.messages ?? [];
+  private setupSocket(roomId: number) {
+    this.messageSubscripion?.unsubscribe();
+    this.socketService.joinRoom(roomId);
+    this.messageSubscripion = this.socketService.onMessage().subscribe((message: Message) => {
+      if (message.room.id === roomId) {
+        this.messages.push(message);
+        this.scrollToBottom();
+      }
+    });
   }
 
   getRoomIcon(room: Room): string | null {
@@ -108,9 +119,27 @@ export class RoomComponent implements OnInit {
     this.newMessage = "";
   }
 
+  openNewGroupDialog() {
+    if(!this.currentUser)
+      return;
+    const dialogRef = this.matDialog.open(NewGroupDialogComponent, {
+      data: {
+        friends: this.currentUser.friends,
+      },
+    });
+
+    dialogRef.afterClosed().subscribe((result: {groupName: string, members: User[]}) => {
+      if(!this.currentUser || !result)
+        return;
+      this.roomService.createGroupRoom(result.groupName, this.currentUser.id, result.members.map(m => m.id)).subscribe(room => {
+        this.currentUser?.privateRooms.push(room);
+      })
+    });
+  }
+
   scrollToBottom() {
     setTimeout(() => {
-      if(this.chatContainer) {
+      if (this.chatContainer) {
         this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
       }
     }, 100);

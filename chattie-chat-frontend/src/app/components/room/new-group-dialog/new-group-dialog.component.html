@@ -1,0 +1,24 @@
+<h2 mat-dialog-title>Create New Group</h2>
+
+<mat-dialog-content>
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Group Name</mat-label>
+        <input matInput type="text" [(ngModel)]="groupName" />
+    </mat-form-field>
+
+    <mat-label>Select at least 2 friends</mat-label>
+    <mat-selection-list #friendList>
+        <mat-list-option *ngFor="let friend of data.friends" [value]="friend">
+            <img [src]="friend.avatarUrl || 'assets/img/default.jpg'" width="24" height="24"
+                style="margin-right: 8px" />
+            {{ friend.username }}
+        </mat-list-option>
+    </mat-selection-list>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-flat-button color="primary" (click)="onCreate(friendList.selectedOptions.selected)">
+        Create
+    </button>
+</mat-dialog-actions>

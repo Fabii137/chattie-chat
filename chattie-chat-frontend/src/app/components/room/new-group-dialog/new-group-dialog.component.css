@@ -1,0 +1,12 @@
+.full-width {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+mat-selection-list {
+    max-height: 200px;
+    overflow: auto;
+    img {
+        border-radius: 50%;
+    }
+}

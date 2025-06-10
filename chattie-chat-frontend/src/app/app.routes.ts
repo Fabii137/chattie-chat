@@ -8,6 +8,7 @@ export const routes: Routes = [
     { path: '', redirectTo: 'friends', pathMatch: 'full'},
     { path: 'friends', component: FriendsComponent, title: 'Friends', canActivate: [AuthGuard]},
     { path: 'login', component: LoginComponent, title: 'Login'},
-    { path: 'room/:roomId', component: RoomComponent, title: 'Room', canActivate: [AuthGuard]},
+    { path: 'rooms', component: RoomComponent, title: 'Rooms', canActivate: [AuthGuard]},
+    { path: 'rooms/:roomId', component: RoomComponent, title: 'Room', canActivate: [AuthGuard]},
     { path: '**', redirectTo: 'friends'}
 ];

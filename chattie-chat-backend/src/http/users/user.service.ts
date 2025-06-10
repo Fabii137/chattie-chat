@@ -7,27 +7,16 @@ import { LoginDto } from "src/http/dtos/login.dto";
 import * as bcrypt from 'bcrypt';
 import { SafeUser } from "src/http/dtos/safeUser.dto";
 import { ServerEntity } from "../servers/server.entity";
+import { allUserRelations } from "src/utils/utilts";
 
 @Injectable()
 export class UserService {
     constructor(@InjectRepository(User) private userRepo: Repository<User>) { }
 
     async getUserById(userId: number): Promise<User> {
-        const user = await this.userRepo.findOne({where: {id: userId}, 
-            relations: [ 
-                "friends",
-                "incomingFriendRequests",
-                "outgoingFriendRequests",
-                "privateRooms",
-                "privateRooms.users",
-                "privateRooms.messages",
-                "servers",
-                "servers.users",
-                "servers.rooms"
-            ]
-        });
-                
-        if(!user) {
+        const user = await this.userRepo.findOne({ where: { id: userId }, relations: allUserRelations });
+
+        if (!user) {
             throw new UnauthorizedException("User not found");
         }
 
@@ -94,7 +83,12 @@ export class UserService {
         user.isOnline = true;
         await this.userRepo.save(user);
 
-        return this.toSafeUser(user);
+        const userWithRelations = await this.userRepo.findOne({
+            where: { id: user.id },
+            relations: allUserRelations,
+        });
+
+        return this.toSafeUser(userWithRelations!);
     }
 
     async sendFriendRequest(senderId: number, receiverName: string): Promise<void> {
@@ -113,8 +107,8 @@ export class UserService {
 
         const alreadyFriends = await this.userRepo.createQueryBuilder('user')
             .leftJoin('user.friends', 'friend')
-            .where('user.id = :receiverId', { receiverId: receiver.id})
-            .andWhere('friend.id = :senderId', {senderId})
+            .where('user.id = :receiverId', { receiverId: receiver.id })
+            .andWhere('friend.id = :senderId', { senderId })
             .getCount();
 
         if (alreadyFriends) {
@@ -123,11 +117,11 @@ export class UserService {
 
         const alreadyRequested = await this.userRepo.createQueryBuilder('user')
             .leftJoin('user.incomingFriendRequests', 'request')
-            .where('user.id = :receiverId', { receiverId: receiver.id})
-            .andWhere('request.id = :senderId', {senderId})
+            .where('user.id = :receiverId', { receiverId: receiver.id })
+            .andWhere('request.id = :senderId', { senderId })
             .getCount();
 
-        if(alreadyRequested) {
+        if (alreadyRequested) {
             throw new ConflictException("You already sent a friend request to this person");
         }
 
@@ -136,7 +130,7 @@ export class UserService {
 
         sender.outgoingFriendRequests = sender.outgoingFriendRequests || [];
         sender.outgoingFriendRequests.push(receiver);
-        
+
         await this.userRepo.save(sender);
         await this.userRepo.save(receiver);
     }
@@ -154,13 +148,11 @@ export class UserService {
 
         const requestExists = await this.userRepo.createQueryBuilder('user')
             .leftJoin('user.incomingFriendRequests', 'request')
-            .where('user.id = :receiverId', { receiverId: receiver.id})
-            .andWhere('request.id = :senderId', {senderId})
+            .where('user.id = :receiverId', { receiverId: receiver.id })
+            .andWhere('request.id = :senderId', { senderId })
             .getCount();
 
-        console.log({receiverId: receiver.id, senderId, requestExists})
-
-        if(!requestExists) {
+        if (!requestExists) {
             throw new ConflictException("No friend request from this user");
         }
 
@@ -190,11 +182,11 @@ export class UserService {
 
         const requestExists = await this.userRepo.createQueryBuilder('user')
             .leftJoin('user.incomingFriendRequests', 'request')
-            .where('user.id = :receiverId', { receiverId: receiver.id})
-            .andWhere('request.id = :senderId', {senderId})
+            .where('user.id = :receiverId', { receiverId: receiver.id })
+            .andWhere('request.id = :senderId', { senderId })
             .getCount();
 
-        if(!requestExists) {
+        if (!requestExists) {
             throw new ConflictException("No friend request from this user");
         }
 
