@@ -18,7 +18,11 @@ export class ServerEntity {
     @JoinColumn()
     rooms: Room[];
 
-    @Column()
+    @ManyToMany(() => User)
+    @JoinTable({ name: 'server_invites' })
+    invites: User[];
+
+    @Column({ default: "" })
     iconUrl: string;
 
     @ManyToOne(() => User)

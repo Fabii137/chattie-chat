@@ -1,0 +1,15 @@
+<h2 mat-dialog-title>Create New Room</h2>
+
+<mat-dialog-content>
+    <mat-form-field appearance="fill" class="full-width">
+        <mat-label>Room Name</mat-label>
+        <input matInput type="text" [(ngModel)]="roomName" />
+    </mat-form-field>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()">Cancel</button>
+    <button mat-flat-button color="primary" (click)="onCreate()">
+        Create
+    </button>
+</mat-dialog-actions>

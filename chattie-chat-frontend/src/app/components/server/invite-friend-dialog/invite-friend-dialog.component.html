@@ -1,0 +1,14 @@
+<h2 mat-dialog-title>Invite Friends to {{data.serverName || "Server"}}</h2>
+<mat-dialog-content>
+  <mat-selection-list>
+    <mat-list-option *ngFor="let friend of data.friends" [selected]="selectedFriends.has(friend.id)" (click)="toggleSelection(friend.id)">
+      <img [src]="friend.avatarUrl || 'assets/img/default.jpg'" alt="Avatar" width="24" height="24" style="border-radius: 50%; margin-right: 8px;">
+      {{ friend.username }}
+    </mat-list-option>
+  </mat-selection-list>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="invite()">Invite</button>
+</mat-dialog-actions>

@@ -16,6 +16,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { Message } from '../../../entities/message.entity';
 import { MatDialog } from '@angular/material/dialog';
 import { NewGroupDialogComponent } from './new-group-dialog/new-group-dialog.component';
+import { ServerService } from '../../../services/http-backend/server.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-room',
@@ -37,8 +39,6 @@ export class RoomComponent implements OnInit, OnDestroy {
   roomId: number | null = null;
   messages: Message[] = [];
 
-  currentUser: User | null = null;
-
   private messageSubscripion: Subscription | null = null;
   private routeSubscription?: Subscription;
   newMessage: string = '';
@@ -50,7 +50,9 @@ export class RoomComponent implements OnInit, OnDestroy {
     private socketService: SocketService,
     private route: ActivatedRoute,
     private router: Router,
-    private matDialog: MatDialog
+    private matDialog: MatDialog,
+    private serverService: ServerService,
+    private snackBar: MatSnackBar
   ) { }
 
   async ngOnInit(): Promise<void> {
@@ -70,18 +72,19 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   async loadCurrentUser() {
-    const user = this.authService.currentUser;
+    const user = this.getCurrentUser();
     if (!user)
       return;
 
-    this.currentUser = await firstValueFrom(this.userService.getUserById(user.id));
+    this.authService.currentUser = await firstValueFrom(this.userService.getUserById(user.id));
   }
 
   private async loadRoom(roomId: number) {
-    if (!this.currentUser) 
+    const currentUser = this.getCurrentUser()
+    if (!currentUser) 
       return;
 
-    this.room = await firstValueFrom(this.roomService.getRoomById(roomId, this.currentUser.id));
+    this.room = await firstValueFrom(this.roomService.getRoomById(roomId, currentUser.id));
     this.messages = (this.room.messages ?? []).sort((a, b) =>
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
@@ -100,9 +103,10 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   getRoomIcon(room: Room): string | null {
-    if (room.type !== RoomType.DM)
+    const currentUser = this.getCurrentUser();
+    if (room.type !== RoomType.DM || !currentUser)
       return null;
-    const friend = room.users.filter((u) => u.id !== this.currentUser?.id)[0];
+    const friend = room.users.filter((u) => u.id !== currentUser.id)[0];
     return friend?.avatarUrl || 'assets/img/default.jpg';
   }
 
@@ -113,26 +117,49 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   async sendMessage() {
-    if (!this.newMessage.trim() || !this.roomId || !this.currentUser)
+    const currentUser = this.getCurrentUser();
+    if (!this.newMessage.trim() || !this.roomId || !currentUser)
       return;
-    this.socketService.sendMessage(this.roomId, this.currentUser?.id, this.newMessage);
+    this.socketService.sendMessage(this.roomId, currentUser.id, this.newMessage);
     this.newMessage = "";
   }
 
+  acceptInvite(message: Message) {
+    const startIdx = message.content.indexOf('(');
+    const endIdx = message.content.indexOf(')');
+    const serverIdStr = message.content.slice(startIdx+1, endIdx);
+    const serverId = Number(serverIdStr);
+    const currentUser = this.getCurrentUser();
+
+    if(!currentUser?.id)
+      return;
+
+    this.serverService.joinServer(serverId, currentUser.id).subscribe(server => {
+      currentUser.servers.push(server);
+      this.openSnackBar(`Successfully joined Server ${server.name}`);
+    })
+  }
+
+  getCurrentUser(): User | null {
+    return this.authService.currentUser;
+  }
+
   openNewGroupDialog() {
-    if(!this.currentUser)
+    const currentUser = this.getCurrentUser();
+    if(!currentUser)
       return;
     const dialogRef = this.matDialog.open(NewGroupDialogComponent, {
       data: {
-        friends: this.currentUser.friends,
+        friends: currentUser.friends,
       },
     });
 
     dialogRef.afterClosed().subscribe((result: {groupName: string, members: User[]}) => {
-      if(!this.currentUser || !result)
+      if(!currentUser || !result)
         return;
-      this.roomService.createGroupRoom(result.groupName, this.currentUser.id, result.members.map(m => m.id)).subscribe(room => {
-        this.currentUser?.privateRooms.push(room);
+      this.roomService.createGroupRoom(result.groupName, currentUser.id, result.members.map(m => m.id)).subscribe(room => {
+        currentUser.privateRooms.push(room);
+        this.openSnackBar(`Successfully created group ${room.name}`)
       })
     });
   }
@@ -143,5 +170,13 @@ export class RoomComponent implements OnInit, OnDestroy {
         this.chatContainer.nativeElement.scrollTop = this.chatContainer.nativeElement.scrollHeight;
       }
     }, 100);
+  }
+
+  openSnackBar(message: string) {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'center',
+      verticalPosition: 'top'
+    })
   }
 }

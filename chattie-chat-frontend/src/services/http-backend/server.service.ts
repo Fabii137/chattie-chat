@@ -9,6 +9,13 @@ import { Room } from '../../entities/room.entity';
 export class ServerService {
     constructor(private http: HttpClient) { }
 
+    getServerById(serverId: number): Observable<Server> {
+        const url = `${environment.apiURL}servers/${serverId}`;
+        return this.http.get<Server>(url).pipe(
+            catchError(this.handleError)
+        );
+    }
+
     createServer(name: string, creatorId: number, iconUrl?: string): Observable<Server> {
         const url = `${environment.apiURL}servers/create`;
         return this.http.post<Server>(url, { name, creatorId, iconUrl }).pipe(
@@ -21,6 +28,11 @@ export class ServerService {
         return this.http.delete<void>(url, { body: { userId } }).pipe(
             catchError(this.handleError)
         );
+    }
+
+    inviteToServer(serverId: number, senderId: number, invites: number[]): Observable<void> {
+        const url = `${environment.apiURL}servers/${serverId}/invite`;
+        return this.http.post<void>(url, { senderId, invites });
     }
 
     joinServer(serverId: number, userId: number): Observable<Server> {
@@ -39,7 +51,7 @@ export class ServerService {
 
     createRoom(name: string, serverId: number, creatorId: number): Observable<Room> {
         const url = `${environment.apiURL}servers/${serverId}/create-room`;
-        return this.http.post<Room>(url, {name, creatorId}).pipe(
+        return this.http.post<Room>(url, { name, creatorId }).pipe(
             catchError(this.handleError)
         );
     }

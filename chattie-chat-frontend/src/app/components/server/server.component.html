@@ -1,0 +1,62 @@
+<!-- server.component.html -->
+<mat-drawer-container class="server-container" autosize>
+    <mat-drawer #drawer class="server-sidenav" mode="side" opened>
+        <div class="server-room-list" *ngIf="server && server.rooms">
+            <div class="server-header" *ngIf="currentUser?.id === server?.creator?.id">
+                <button mat-button [matMenuTriggerFor]="serverMenu">
+                    {{ server.name }}
+                    <mat-icon>expand_more</mat-icon>
+                </button>
+            </div>
+
+            <mat-menu #serverMenu="matMenu">
+                <button mat-menu-item (click)="openInviteDialog()" *ngIf="currentUser?.id === server?.creator?.id">
+                    <mat-icon>person_add</mat-icon>
+                    Invite Friends
+                </button>
+                <button mat-menu-item (click)="openSettingsDialog()" *ngIf="currentUser?.id === server?.creator?.id">
+                    <mat-icon>settings</mat-icon>
+                    Server Settings
+                </button>
+            </mat-menu>
+            <div class="new-room-btn" *ngIf="currentUser?.id === server?.creator?.id">
+                <button mat-flat-button color="primary" (click)="openAddRoomDialog()">
+                    <mat-icon>add</mat-icon>
+                    New Room
+                </button>
+            </div>
+            <div *ngFor="let room of server.rooms" class="server-room" [class.selected]="room.id === roomId"
+                (click)="selectRoom(room)">
+                # {{ room.name }}
+            </div>
+        </div>
+    </mat-drawer>
+
+    <mat-drawer-content class="server-content" *ngIf="room">
+        <div class="chat" #chatContainer>
+            <div *ngFor="let message of messages" class="chat-message"
+                [class.own-message]="message.sender.id === currentUser?.id">
+                <img class="sender-avatar" [src]="message.sender.avatarUrl || 'assets/img/default.jpg'" alt="Avatar">
+                <div class="message-content">
+                    <div class="message-header">
+                        <strong>{{ message.sender.username }}</strong>
+                        <span class="timestamp">{{ message.timestamp | date:'shortTime' }}</span>
+                    </div>
+                    <div class="message-text">
+                        {{ message.content }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="input">
+            <mat-form-field class="message-input" appearance="fill">
+                <mat-label>Message</mat-label>
+                <input matInput [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" type="text" autocomplete="off" />
+            </mat-form-field>
+            <button class="send-btn" mat-icon-button color="primary" (click)="sendMessage()">
+                <mat-icon>send</mat-icon>
+            </button>
+        </div>
+    </mat-drawer-content>
+</mat-drawer-container>

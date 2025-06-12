@@ -6,8 +6,8 @@
                 New Group
             </button>
         </div>
-        <div class="room-list" *ngIf="currentUser && currentUser.privateRooms">
-            <div *ngFor="let room of currentUser.privateRooms" class="room" [class.selected]="room.id === roomId"
+        <div class="room-list" *ngIf="getCurrentUser() && getCurrentUser()?.privateRooms">
+            <div *ngFor="let room of getCurrentUser()?.privateRooms" class="room" [class.selected]="room.id === roomId"
                 (click)="selectRoom(room)">
                 <img *ngIf="getRoomIcon(room)" [src]="getRoomIcon(room)" alt="room icon" />
                 {{ room.name }}
@@ -18,7 +18,7 @@
     <mat-drawer-content class="room-content" *ngIf="room">
         <div class="chat" #chatContainer>
             <div *ngFor="let message of messages" class="chat-message"
-                [class.own-message]="message.sender.id === currentUser?.id">
+                [class.own-message]="message.sender.id === getCurrentUser()?.id">
                 <img class="sender-avatar" [src]="message.sender.avatarUrl || 'assets/img/default.jpg'" alt="Avatar">
 
                 <div class="message-content">
@@ -29,6 +29,9 @@
                     <div class="message-text">
                         {{ message.content }}
                     </div>
+                </div>
+                <div *ngIf="message.type === 'SERVER_INVITE'">
+                    <button mat-flat-button (click)="acceptInvite(message)" >Accept Invite</button>
                 </div>
             </div>
         </div>

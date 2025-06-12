@@ -5,7 +5,7 @@ export interface User {
     id: number;
     username: string;
     email: string;
-    avatarUrl: string;
+    avatarUrl?: string;
     friends: User[];
     incomingFriendRequests: User[];
     outgoingFriendRequests: User[];

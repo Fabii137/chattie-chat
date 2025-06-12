@@ -6,7 +6,8 @@ export interface Server {
     name: string;
     users: User[];
     rooms: Room[];
-    iconUrl: string;
+    invites: User[];
+    iconUrl?: string;
     creator: User;
     createdAt: Date;
 }
