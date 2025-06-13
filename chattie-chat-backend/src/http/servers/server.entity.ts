@@ -14,7 +14,7 @@ export class ServerEntity {
     @JoinTable({ name: 'server_users' })
     users: User[];
 
-    @OneToMany(() => Room, (room) => room.server)
+    @OneToMany(() => Room, (room) => room.server, {cascade: true})
     @JoinColumn()
     rooms: Room[];
 
@@ -25,7 +25,7 @@ export class ServerEntity {
     @Column({ default: "" })
     iconUrl: string;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, {onDelete: 'CASCADE'})
     @JoinColumn()
     creator: User;
 

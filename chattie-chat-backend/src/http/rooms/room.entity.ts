@@ -20,7 +20,7 @@ export class Room {
     @Column({type: 'enum', enum: RoomType})
     type: RoomType;
 
-    @OneToMany(() => Message, (message) => message.room)
+    @OneToMany(() => Message, (message) => message.room, {cascade: true})
     messages: Message[];
 
     @ManyToOne(() => ServerEntity, (server) => server.rooms, {nullable: true})
@@ -30,7 +30,7 @@ export class Room {
     @JoinTable({ name: 'room_users' })
     users: User[];
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, {onDelete: 'CASCADE'})
     creator: User;
 
     @CreateDateColumn()

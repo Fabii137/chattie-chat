@@ -19,11 +19,11 @@ export class Message {
     @Column({ default: MessageType.TEXT })
     type: MessageType;
 
-    @ManyToOne(() => User)
+    @ManyToOne(() => User, { onDelete: 'CASCADE' })
     @JoinColumn()
     sender: User;
 
-    @ManyToOne(() => Room, (room) => room.messages)
+    @ManyToOne(() => Room, (room) => room.messages, {onDelete: 'CASCADE'})
     @JoinColumn()
     room: Room;
 
