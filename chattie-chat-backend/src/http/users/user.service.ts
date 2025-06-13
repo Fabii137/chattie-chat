@@ -6,37 +6,25 @@ import { RegisterDto } from "src/http/dtos/register.dto";
 import { LoginDto } from "src/http/dtos/login.dto";
 import * as bcrypt from 'bcrypt';
 import { SafeUser } from "src/http/dtos/safeUser.dto";
-import { ServerEntity } from "../servers/server.entity";
 import { allUserRelations } from "src/utils/utilts";
 
 @Injectable()
 export class UserService {
-    constructor(@InjectRepository(User) private userRepo: Repository<User>) { }
+    constructor(
+        @InjectRepository(User) private userRepo: Repository<User>
+    ) { }
 
     async getUserById(userId: number): Promise<User> {
-        const user = await this.userRepo.findOne({ where: { id: userId }, relations: allUserRelations });
-
-        if (!user) {
-            throw new UnauthorizedException("User not found");
-        }
-
+        const user = await this.getUser({ id: userId }, allUserRelations);
         return user;
     }
 
     async getFriendRequests(userId: number): Promise<User[]> {
-        const user = await this.userRepo.findOne({
-            where: { id: userId },
-            relations: ['incomingFriendRequests']
-        });
-
-        if (!user) {
-            throw new UnauthorizedException("User not found");
-        }
-
+        const user = await this.getUser({ id: userId }, ['incomingFriendRequests']);
         return user.incomingFriendRequests;
     }
 
-    async register(registerDto: RegisterDto): Promise<SafeUser | null> {
+    async register(registerDto: RegisterDto): Promise<User> {
         const existingByEmail = await this.userRepo.findOne({ where: { email: registerDto.email } });
         if (existingByEmail) {
             throw new ConflictException('Email already in use');
@@ -60,46 +48,12 @@ export class UserService {
         if (!savedUser) {
             throw new ConflictException('User registration failed');
         }
-        return this.toSafeUser(savedUser);
-    }
-
-
-    async login(loginDto: LoginDto): Promise<SafeUser | null> {
-        const user = await this.userRepo
-            .createQueryBuilder("user")
-            .addSelect("user.password") // add password
-            .where("user.email = :email", { email: loginDto.email })
-            .getOne();
-
-        if (!user) {
-            throw new UnauthorizedException("Email or Password is not correct");
-        }
-
-        const correctPassword = await bcrypt.compare(loginDto.password, user.password);
-        if (!correctPassword) {
-            throw new UnauthorizedException("Email or Password is not correct");
-        }
-
-        user.isOnline = true;
-        await this.userRepo.save(user);
-
-        const userWithRelations = await this.userRepo.findOne({
-            where: { id: user.id },
-            relations: allUserRelations,
-        });
-
-        return this.toSafeUser(userWithRelations!);
+        return savedUser;
     }
 
     async sendFriendRequest(senderId: number, receiverName: string): Promise<void> {
-        const sender = await this.userRepo.findOne({ where: { id: senderId }, relations: ["friends", "outgoingFriendRequests"] });
-        if (!sender)
-            throw new UnauthorizedException("Sender not found");
-
-        const receiver = await this.userRepo.findOne({ where: { username: receiverName }, relations: ["friends", "incomingFriendRequests"] });
-        if (!receiver) {
-            throw new UnauthorizedException("Receiver not found");
-        }
+        const sender = await this.getUser({ id: senderId }, ["friends", "outgoingFriendRequests"]);
+        const receiver = await this.getUser({ username: receiverName }, ["friends", "incomingFriendRequests"]);
 
         if (sender.id === receiver.id) {
             throw new ConflictException("You cannot send a friend request to yourself");
@@ -136,15 +90,9 @@ export class UserService {
     }
 
     async acceptFriendRequest(senderId: number, receiverId: number): Promise<void> {
-        const sender = await this.userRepo.findOne({ where: { id: senderId }, relations: ["friends", "outgoingFriendRequests"] });
-        if (!sender) {
-            throw new UnauthorizedException("Sender not found");
-        }
+        const sender = await this.getUser({ id: senderId }, ["friends", "outgoingFriendRequests"]);
+        const receiver = await this.getUser({ id: receiverId }, ["friends", "incomingFriendRequests"]);
 
-        const receiver = await this.userRepo.findOne({ where: { id: receiverId }, relations: ["friends", "incomingFriendRequests"] });
-        if (!receiver) {
-            throw new UnauthorizedException("Receiver not found");
-        }
 
         const requestExists = await this.userRepo.createQueryBuilder('user')
             .leftJoin('user.incomingFriendRequests', 'request')
@@ -170,15 +118,8 @@ export class UserService {
     }
 
     async rejectFriendRequest(senderId: number, receiverId: number): Promise<void> {
-        const sender = await this.userRepo.findOne({ where: { id: senderId }, relations: ["outgoingFriendRequests"] });
-        if (!sender) {
-            throw new UnauthorizedException("Sender not found");
-        }
-
-        const receiver = await this.userRepo.findOne({ where: { id: receiverId }, relations: ["incomingFriendRequests"] });
-        if (!receiver) {
-            throw new UnauthorizedException("Receiver not found");
-        }
+        const sender = await this.getUser({ id: senderId }, ["outgoingFriendRequests"]);
+        const receiver = await this.getUser({ id: receiverId }, ["incomingFriendRequests"]);
 
         const requestExists = await this.userRepo.createQueryBuilder('user')
             .leftJoin('user.incomingFriendRequests', 'request')
@@ -197,15 +138,8 @@ export class UserService {
     }
 
     async deleteFriend(userId: number, friendId: number): Promise<void> {
-        const user = await this.userRepo.findOne({ where: { id: userId }, relations: ["friends"] });
-        if (!user) {
-            throw new UnauthorizedException("User not found");
-        }
-
-        const friend = await this.userRepo.findOne({ where: { id: friendId }, relations: ["friends"] });
-        if (!friend) {
-            throw new UnauthorizedException("Friend not found");
-        }
+        const user = await this.getUser({ id: userId }, ["friends"]);
+        const friend = await this.getUser({ id: friendId }, ["friends"]);
 
         if (!user.friends.some(f => f.id === friend.id)) {
             throw new ConflictException("This user is not your friend");
@@ -219,14 +153,51 @@ export class UserService {
     }
 
     async setOffline(userId: number): Promise<void> {
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (user) {
-            await this.userRepo.update(userId, { isOnline: false });
-        }
+        await this.updateUser({ id: userId }, { isOnline: false });
     }
 
-    toSafeUser(user: User): SafeUser {
-        const { password, ...safeUser } = user;
-        return safeUser;
+    async getUser(filters: { email?: string, id?: number, username?: string }, relations?: string[]): Promise<User> {
+        if (!filters.email && !filters.id && !filters.username) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        const user = await this.userRepo.findOne({ where: filters, relations })
+        if (!user) {
+            throw new UnauthorizedException("User not found");
+        }
+        return user;
+
     }
+
+    async getUserWithPasswordAndRefreshToken(filters: { email?: string; id?: number }): Promise<User> {
+        if (!filters.email && !filters.id) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        const query = this.userRepo.createQueryBuilder("user").addSelect("user.password").addSelect("user.refreshToken");
+
+        if (filters.email) {
+            query.where("user.email = :email", { email: filters.email });
+        } else {
+            query.where("user.id = :id", { id: filters.id });
+        }
+
+        const user = await query.getOne();
+
+        if (!user) {
+            throw new UnauthorizedException("User not found");
+        }
+
+        return user;
+    }
+
+    async updateUser(filters: { email?: string; id?: number }, updateData: Partial<User>,): Promise<User> {
+        if (!filters.email && !filters.id) {
+            throw new UnauthorizedException("Invalid credentials");
+        }
+
+        await this.userRepo.update(filters, updateData);
+        return this.getUser(filters);
+    }
+
 }

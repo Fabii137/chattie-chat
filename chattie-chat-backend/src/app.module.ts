@@ -11,6 +11,7 @@ import { MessageModule } from './http/messages/message.module';
 import { ServerMembershipModule } from './http/serverMembership/serverMembership.module';
 import { ChatModule } from './chat/chat.module';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
+import { AuthModule } from './http/auth/auth.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
     UserModule,
     RoomModule,
     ServerModule,
-    ChatModule
+    ChatModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

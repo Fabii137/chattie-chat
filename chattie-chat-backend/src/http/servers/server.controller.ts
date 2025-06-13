@@ -1,13 +1,17 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, UseGuards } from "@nestjs/common";
 import { ServerService } from "./server.service";
 import { ServerEntity } from "./server.entity";
 import { Room } from "../rooms/room.entity";
+import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
+import { CurrentUser } from "../auth/current-user.decorator";
+import { User } from "../users/user.entity";
 
 @Controller('servers')
 export class ServerController {
     constructor(private serverService: ServerService) { }
 
     @Get(':serverId')
+    @UseGuards(JwtAuthGuard)
     async getServerById(@Param('serverId', ParseIntPipe) serverId: number): Promise<ServerEntity> {
         if(!serverId) {
             throw new BadRequestException("Missing serverId in request");
@@ -16,50 +20,56 @@ export class ServerController {
     }
 
     @Post('create')
-    async createServer(@Body() body: { name: string, creatorId: number, iconUrl?: string }): Promise<ServerEntity> {
-        if (!body || !body.name || !body.creatorId) {
-            throw new BadRequestException('Missing name or creatorId in request.');
+    @UseGuards(JwtAuthGuard)
+    async createServer(@CurrentUser() user: User, @Body() body: { name: string, iconUrl?: string }): Promise<ServerEntity> {
+        if (!body || !body.name) {
+            throw new BadRequestException('Missing name in request.');
         }
-        return this.serverService.createServer(body.name, body.creatorId, body.iconUrl);
+        return this.serverService.createServer(body.name, user.id, body.iconUrl);
     }
 
     @Delete(':serverId/delete')
-    async deleteServer(@Param('serverId', ParseIntPipe) serverId: number, @Body() body: { userId: number }): Promise<void> {
-        if (!body || !serverId || !body.userId) {
-            throw new BadRequestException('Missing serverId or userId in request.');
+    @UseGuards(JwtAuthGuard)
+    async deleteServer(@CurrentUser() user: User, @Param('serverId', ParseIntPipe) serverId: number): Promise<void> {
+        if (!serverId) {
+            throw new BadRequestException('Missing serverId in request.');
         }
-        return this.serverService.deleteServer(serverId, body.userId);
+        return this.serverService.deleteServer(serverId, user.id);
     }
 
     @Post(':serverId/invite')
-    async inviteFriends(@Param('serverId', ParseIntPipe) serverId: number, @Body() body: { senderId: number, invites: number[] }): Promise<void> {
-        if(!body || !serverId || !body.senderId || !body.invites) {
-            throw new BadRequestException("Mising serverId, senderId or invites in request");
+    @UseGuards(JwtAuthGuard)
+    async inviteFriends(@CurrentUser() user: User, @Param('serverId', ParseIntPipe) serverId: number, @Body() body: { invites: number[] }): Promise<void> {
+        if(!body || !serverId|| !body.invites) {
+            throw new BadRequestException("Mising serverId, or invites in request");
         }
-        return this.serverService.invite(serverId, body.senderId, body.invites);
+        return this.serverService.invite(serverId, user.id, body.invites);
     }
 
     @Post(':serverId/join')
-    async joinServer(@Param('serverId') serverId: number, @Body() body: { userId: number }): Promise<ServerEntity> {
-        if (!body || !serverId || !body.userId) {
-            throw new BadRequestException('Missing serverId or userId in request.');
+    @UseGuards(JwtAuthGuard)
+    async joinServer(@CurrentUser() user: User, @Param('serverId') serverId: number): Promise<ServerEntity> {
+        if (!serverId) {
+            throw new BadRequestException('Missing serverId in request.');
         }
-        return this.serverService.joinServer(serverId, body.userId);
+        return this.serverService.joinServer(serverId, user.id);
     }
 
     @Post(':serverId/leave')
-    async leaveServer(@Param('serverId') serverId: number, @Body() body: { userId: number }): Promise<void> {
-        if (!body || !serverId || !body.userId) {
-            throw new BadRequestException('Missing serverId or userId in request.');
+    @UseGuards(JwtAuthGuard)
+    async leaveServer(@CurrentUser() user: User, @Param('serverId') serverId: number): Promise<void> {
+        if (!serverId) {
+            throw new BadRequestException('Missing serverId in request.');
         }
-        return this.serverService.leaveServer(serverId, body.userId);
+        return this.serverService.leaveServer(serverId, user.id);
     }
 
     @Post(':serverId/create-room')
-    async createRoom(@Param('serverId') serverId: number, @Body() body: {name: string, creatorId: number}): Promise<Room> {
-        if (!body || !serverId || !body.creatorId) {
-            throw new BadRequestException('Missing serverId, creatorId or name in request.');
+    @UseGuards(JwtAuthGuard)
+    async createRoom(@CurrentUser() user: User, @Param('serverId') serverId: number, @Body() body: {name: string}): Promise<Room> {
+        if (!body || !serverId) {
+            throw new BadRequestException('Missing serverId or name in request.');
         }
-        return this.serverService.createRoom(body.name, serverId, body.creatorId);
+        return this.serverService.createRoom(body.name, serverId, user.id);
     }
 }
