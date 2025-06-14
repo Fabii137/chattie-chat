@@ -48,6 +48,7 @@ export class LoginComponent {
       const user = await this.authService.login(trimmedEmail, trimmedPassword, this.keepLoggedIn);
       if(user) {
         this.openSnackBar(`Successfully logged in as ${user.username}`)
+        this.router.navigate(['friends']);
       }
     } else {
       this.openSnackBar('Enter valid email and password');
@@ -71,6 +72,7 @@ export class LoginComponent {
     const user = await this.authService.register(trimmedUsername, trimmedEmail, trimmedPassword, this.keepLoggedIn);
     if(user) {
       this.openSnackBar(`Successfully registered as ${user.username}`);
+      this.router.navigate(['friends']); 
     }
   }
 
