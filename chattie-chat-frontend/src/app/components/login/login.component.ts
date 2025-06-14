@@ -27,8 +27,6 @@ export class LoginComponent {
   newPassword: string = '';
   confirmPassword: string = '';
 
-  keepLoggedIn: boolean = false;
-
   constructor(private authService: AuthService, private router: Router, private snackBar: MatSnackBar) {
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/friends']);
@@ -45,7 +43,7 @@ export class LoginComponent {
     const trimmedPassword = this.password.trim();
 
     if (trimmedEmail && trimmedPassword) {
-      const user = await this.authService.login(trimmedEmail, trimmedPassword, this.keepLoggedIn);
+      const user = await this.authService.login(trimmedEmail, trimmedPassword);
       if(user) {
         this.openSnackBar(`Successfully logged in as ${user.username}`)
         this.router.navigate(['friends']);
@@ -69,7 +67,7 @@ export class LoginComponent {
     if(!this.isValidEmail(trimmedEmail) || !this.isValidPassword(trimmedPassword) || !this.isValidUsername(trimmedUsername))
       return;
 
-    const user = await this.authService.register(trimmedUsername, trimmedEmail, trimmedPassword, this.keepLoggedIn);
+    const user = await this.authService.register(trimmedUsername, trimmedEmail, trimmedPassword);
     if(user) {
       this.openSnackBar(`Successfully registered as ${user.username}`);
       this.router.navigate(['friends']); 
@@ -124,7 +122,6 @@ export class LoginComponent {
   }
 
   resetFields() {
-    this.keepLoggedIn = false;
     this.email = '';
     this.password = '';
 

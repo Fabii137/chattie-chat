@@ -61,20 +61,23 @@ export class UserService {
     );
   }
 
-  private handleError(error: HttpErrorResponse) {
-    let errorMessage = 'An unknown error occurred!';
-    if (error.error && error.error.message) {
-      errorMessage = `${error.error.message}`;
-      this.snackBar.open(error.error.message, 'Close', {
+  private handleError = (error: HttpErrorResponse) => {
+    if (error.status) {
+      const errorMessage = error.error?.message ? `${error.error.message}` : `Server returned code: ${error.status}`;
+
+      this.snackBar.open(errorMessage, 'Close', {
         duration: 3000,
         verticalPosition: 'top',
-        horizontalPosition: 'center'
-      })
-    } else {
-      errorMessage = `Server returned code: ${error.status}`;
-    }
-    console.error('UserService Error:', errorMessage);
+        horizontalPosition: 'center',
+      });
 
-    return throwError(() => new Error(errorMessage));
-  }
+      console.error('UserService HTTP Error:', errorMessage, error);
+    } else {
+      console.warn('Non-HTTP error occurred:', error.message || error);
+    }
+
+    return throwError(() => error);
+  };
+
+
 }

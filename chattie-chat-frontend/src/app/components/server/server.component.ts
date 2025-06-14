@@ -20,6 +20,7 @@ import { MatMenuModule } from '@angular/material/menu'
 import { InviteFriendDialogComponent } from './invite-friend-dialog/invite-friend-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ServerService } from '../../../services/server.service';
+import { RoomService } from '../../../services/room.service';
 
 
 @Component({
@@ -44,6 +45,7 @@ export class ServerComponent implements OnInit, OnDestroy {
     private serverService: ServerService,
     private authService: AuthService,
     private socketService: SocketService,
+    private roomService: RoomService,
     private route: ActivatedRoute,
     private router: Router,
     private matDialog: MatDialog,
@@ -62,8 +64,6 @@ export class ServerComponent implements OnInit, OnDestroy {
     } catch(err: any) {
       this.openSnackBar(err.message || "Loading server failed");
     }
-    
-    console.log({currentUser: this.currentUser, room: this.room})
 
   }
 
@@ -79,9 +79,10 @@ export class ServerComponent implements OnInit, OnDestroy {
     if (this.roomId === room.id)
       return;
 
-    this.room = room;
     this.roomId = room.id;
-    this.messages = room.messages.sort((a, b) =>
+    this.room = await firstValueFrom(this.roomService.getRoomById(this.roomId));
+    
+    this.messages = (this.room.messages || []).sort((a, b) =>
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
@@ -90,6 +91,9 @@ export class ServerComponent implements OnInit, OnDestroy {
     this.messageSubscripion = this.socketService.onMessage().subscribe(msg => {
       if (msg.room.id === room.id) {
         this.messages.push(msg);
+        if(this.messages.length > 200) {
+          this.messages.shift();
+        }
         this.scrollToBottom();
       }
     });
@@ -98,7 +102,6 @@ export class ServerComponent implements OnInit, OnDestroy {
   }
 
   sendMessage() {
-    console.log({ newMesage: this.newMessage, roomId: this.roomId, currentUser: this.currentUser })
     if (!this.newMessage.trim() || !this.roomId || !this.currentUser)
       return;
     this.socketService.sendMessage(this.roomId, this.currentUser.id, this.newMessage);

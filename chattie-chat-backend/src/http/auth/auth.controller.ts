@@ -26,7 +26,7 @@ export class AuthController {
     }
 
     @Post('register')
-    async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true}) response: Response): Promise<User> {
+    async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true }) response: Response): Promise<User> {
         const user = await this.userService.register(registerDto);
         await this.authService.login(user, response);
         const fullUser = await this.userService.getUserById(user.id);
@@ -35,9 +35,11 @@ export class AuthController {
 
     @Post('logout')
     @UseGuards(JwtAuthGuard)
-    logout(@Res({ passthrough: true }) res: Response) {
+    async logout(@CurrentUser() user: User, @Res({ passthrough: true }) res: Response) {
+        await this.userService.updateUser({ id: user.id }, { isOnline: false });
         res.clearCookie('Authentication');
         res.clearCookie('Refresh');
+
     }
 
     @Post('refresh')

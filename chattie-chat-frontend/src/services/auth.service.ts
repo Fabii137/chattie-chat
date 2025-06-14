@@ -28,28 +28,32 @@ export class AuthService {
     return this.currentUser !== null;
   }
 
-  async register(username: string, email: string, password: string, saveCredentials: boolean): Promise<User | null> {
+  async register(username: string, email: string, password: string): Promise<User | null> {
     try {
       const url = `${environment.apiURL}auth/register`;
       const user = await firstValueFrom(this.http.post<User>(url, { username, email, password }, { withCredentials: true }));
+      this.currentUser = user;
       return user;
-
     } catch (error: any) {
-      this.openSnackBar(error.message || 'Login failed');
+      console.error('Register error:', error);
+      this.openSnackBar(error.message || 'Registration failed');
       return null;
     }
   }
 
-  async login(email: string, password: string, saveCredentials: boolean): Promise<User | null> {
+  async login(email: string, password: string): Promise<User | null> {
     try {
       const url = `${environment.apiURL}auth/login`;
       const user = await firstValueFrom(this.http.post<User>(url, { email, password }, { withCredentials: true }));
+      this.currentUser = user;
       return user;
     } catch (error: any) {
-      this.openSnackBar(error.message || 'Login failed');
+      console.error('Login error:', error);
+      this.openSnackBar(error.error?.message || 'Login failed');
       return null;
     }
   }
+
 
   refreshToken() {
     return this.http.post(`${environment.apiURL}auth/refresh`, {}, { withCredentials: true });
@@ -62,12 +66,11 @@ export class AuthService {
 
     try {
       const url = `${environment.apiURL}auth/logout`;
-      const user = await firstValueFrom(this.http.post<User>(url, { withCredentials: true }));
+      this.http.post<User>(url, { withCredentials: true }).subscribe();
     } catch (error: any) {
       this.openSnackBar(error.message || 'Login failed');
     }
 
-    this.userService.setOffline();
     this.currentUser = null;
 
     this.router.navigate(['login']);
@@ -79,6 +82,16 @@ export class AuthService {
       return;
 
     this.userService.setOffline();
+  }
+
+  async initializeUser(): Promise<void> {
+    try {
+      await firstValueFrom(this.refreshToken());
+      const user = await firstValueFrom(this.userService.getMe());
+      this.currentUser = user;
+    } catch {
+      this.currentUser = null;
+    }
   }
 
   openSnackBar(message: string): void {

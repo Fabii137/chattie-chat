@@ -20,8 +20,11 @@ export class RoomService {
 
     async getRoomById(roomId: number, userId: number): Promise<Room> {
         const room = await this.getRoom(roomId, allRoomRelations);
+        
+        const isRoomMember = room.users.some(u => u.id === userId);
+        const isServerMember = room.server?.users?.some(u => u.id === userId);
 
-        if (!room.users.some(u => u.id === userId)) {
+        if (!isRoomMember && !isServerMember) {
             throw new UnauthorizedException('User is not in this room');
         }
 
@@ -131,10 +134,13 @@ export class RoomService {
     }
 
     async addMessage(roomId: number, senderId: number, content: string): Promise<Message> {
-        const room = await this.getRoom(roomId, ["users", "server"]);
+        const room = await this.getRoom(roomId, ["users", "server", "server.users"]);
         const sender = await this.userService.getUser({ id: senderId });
 
-        if (!room.server && !room.users.some(u => u.id === senderId)) {
+        const isRoomMember = room.users.some(u => u.id === senderId);
+        const isServerMember = room.server?.users?.some(u => u.id === senderId);
+
+        if (!isRoomMember && !isServerMember) {
             throw new UnauthorizedException("User is not in this room");
         }
 

@@ -15,7 +15,6 @@
             </button>
             }
         </mat-form-field>
-        <mat-checkbox [(ngModel)]="keepLoggedIn">Save Login</mat-checkbox>
         <button mat-flat-button (click)="login()">Login</button>
         <p>Don't have an account? <a (click)="toggle()">Register here</a></p>
     </div>
@@ -43,7 +42,6 @@
             <mat-label>Confirm Password</mat-label>
             <input matInput (keydown.enter)="onEnterRegister()" type="password" [(ngModel)]="confirmPassword" required>
         </mat-form-field>
-        <mat-checkbox [(ngModel)]="keepLoggedIn">Save Login</mat-checkbox>
         <button mat-flat-button (click)="register()">Register</button>
 
         <p>Already have an account? <a (click)="toggle()">Login here</a></p>

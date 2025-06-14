@@ -1,34 +1,36 @@
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from "@angular/common/http";
-import { Injectable } from "@angular/core";
+import { Injectable, Injector } from "@angular/core";
 import { BehaviorSubject, catchError, filter, Observable, switchMap, take, throwError } from "rxjs";
 import { AuthService } from "../services/auth.service";
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class AuthInterceptor implements HttpInterceptor {
     private isRefreshing = false;
     private refreshTokenSubject = new BehaviorSubject<any>(null);
 
-    constructor(private authService: AuthService) { }
+    constructor(private injector: Injector) { }
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         const request = req.clone({ withCredentials: true });
 
         return next.handle(request).pipe(
             catchError(error => {
-                if (error instanceof HttpErrorResponse && error.status === 401 && error.error?.error === 'AccessTokenExpired') {
-                    return this.handleRefreshTokenError(request, next);
+                if (error instanceof HttpErrorResponse && error.status === 401 && (error.error?.error === 'AccessTokenExpired' || error.error?.message === 'No auth token')) {
+                    const authService = this.injector.get(AuthService);
+                    return this.handleRefreshTokenError(authService, request, next);
                 }
                 return throwError(() => error);
             })
         )
     }
 
-    private handleRefreshTokenError(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    private handleRefreshTokenError(authService: AuthService, request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
         if (!this.isRefreshing) {
             this.isRefreshing = true; // avoiding requesting multiple refresh tokens
             this.refreshTokenSubject.next(null); // refresh is starting
-
-            return this.authService.refreshToken().pipe(
+            return authService.refreshToken().pipe(
                 switchMap(() => {
                     this.isRefreshing = false;
                     this.refreshTokenSubject.next(true); // notifies other responses
@@ -36,7 +38,7 @@ export class AuthInterceptor implements HttpInterceptor {
                 }),
                 catchError(err => {
                     this.isRefreshing = false;
-                    this.authService.logOut(); // fallback logout if refresh fails
+                    authService.logOut(); // fallback logout if refresh fails
                     return throwError(() => err);
                 })
             );

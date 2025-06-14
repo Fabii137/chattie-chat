@@ -4,10 +4,11 @@ import { catchError, Observable, throwError } from 'rxjs';
 import { Server } from '../entities/server.entity';
 import { environment } from '../environments/environment';
 import { Room } from '../entities/room.entity';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable({ providedIn: 'root' })
 export class ServerService {
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private snackBar: MatSnackBar) { }
 
     getServerById(serverId: number): Observable<Server> {
         const url = `${environment.apiURL}servers/${serverId}`;
@@ -56,17 +57,21 @@ export class ServerService {
         );
     }
 
-    private handleError(error: HttpErrorResponse) {
-        let errorMessage = 'An unknown error occurred!';
-        if (error.error instanceof ErrorEvent) {
-            errorMessage = `Client error: ${error.error.message}`;
-        } else if (error.error && error.error.message) {
-            errorMessage = `${error.error.message}`;
-        } else {
-            errorMessage = `Server returned code: ${error.status}`;
-        }
-        console.error('ServerService Error:', errorMessage);
+    private handleError = (error: HttpErrorResponse) => {
+    if (error.status) {
+      const errorMessage = error.error?.message ? `${error.error.message}` : `Server returned code: ${error.status}`;
 
-        return throwError(() => new Error(errorMessage));
+      this.snackBar.open(errorMessage, 'Close', {
+        duration: 3000,
+        verticalPosition: 'top',
+        horizontalPosition: 'center',
+      });
+
+      console.error('ServerService HTTP Error:', errorMessage, error);
+    } else {
+      console.warn('Non-HTTP error occurred:', error.message || error);
     }
+
+    return throwError(() => error);
+  };
 }
