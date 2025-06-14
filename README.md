@@ -6,7 +6,7 @@
 
 ## Features
 
-- **User Authentication**  
+- **User Authentication, Authorization**  
 - Friend management: add, delete, accept/reject friend requests  
 - Real-time messaging via WebSockets (Socket.IO)  
 - Group chats and servers with multiple rooms  
@@ -20,7 +20,7 @@
 
 | Layer    | Technology                           |
 | -------- | ---------------------------------- |
-| Backend  | NestJS, TypeORM, Socket.IO          |
+| Backend  | NestJS, TypeORM, Socket.IO, JWT          |
 | Frontend | Angular, Angular Material, Socket.IO Client |
 | Database | MySQL                              |
 
