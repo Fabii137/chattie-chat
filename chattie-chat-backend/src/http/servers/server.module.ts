@@ -7,9 +7,10 @@ import { ServerController } from "./server.controller";
 import { User } from "../users/user.entity";
 import { Room } from "../rooms/room.entity";
 import { RoomModule } from "../rooms/room.module";
+import { UserModule } from "../users/user.module";
 
 @Module({
-    imports: [TypeOrmModule.forFeature([ServerEntity, ServerMembership, User, Room]), RoomModule],
+    imports: [TypeOrmModule.forFeature([ServerEntity, ServerMembership, User, Room]), RoomModule, UserModule],
     providers: [ServerService],
     exports: [ServerService],
     controllers: [ServerController]
