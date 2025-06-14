@@ -6,6 +6,7 @@ import { User } from "../users/user.entity";
 import { Message, MessageType } from "../messages/message.entity";
 import { allRoomRelations, allUserRelations, allMessageRelations } from "src/utils/utilts";
 import { ServerEntity } from "../servers/server.entity";
+import { UserService } from "../users/user.service";
 
 @Injectable()
 export class RoomService {
@@ -13,19 +14,12 @@ export class RoomService {
         @InjectRepository(Room) private roomRepo: Repository<Room>,
         @InjectRepository(User) private userRepo: Repository<User>,
         @InjectRepository(Message) private messageRepo: Repository<Message>,
-        @InjectRepository(ServerEntity) private serverRepo: Repository<ServerEntity>
+        @InjectRepository(ServerEntity) private serverRepo: Repository<ServerEntity>,
+        private userService: UserService
     ) { }
 
     async getRoomById(roomId: number, userId: number): Promise<Room> {
-        const room = await this.roomRepo.findOne({ where: { id: roomId }, relations: allRoomRelations });
-        if (!room) {
-            throw new ConflictException("Room not found");
-        }
-
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (!user) {
-            throw new ConflictException("User not found");
-        }
+        const room = await this.getRoom(roomId, allRoomRelations);
 
         if (!room.users.some(u => u.id === userId)) {
             throw new UnauthorizedException('User is not in this room');
@@ -52,19 +46,12 @@ export class RoomService {
         );
 
         if (matchedRoom) {
-            const loadedRoom = await this.roomRepo.findOne({ where: { id: matchedRoom.id }, relations: allRoomRelations });
-            if (!loadedRoom) {
-                throw new UnauthorizedException("Error while loading Room");
-            }
+            const loadedRoom = await this.getRoom(matchedRoom.id, allRoomRelations);
             return loadedRoom;
         }
 
-        const userA = await this.userRepo.findOne({ where: { id: userAId }, relations: allUserRelations });
-        const userB = await this.userRepo.findOne({ where: { id: userBId }, relations: allUserRelations });
-
-        if (!userA || !userB) {
-            throw new ConflictException("One or both users not found");
-        }
+        const userA = await this.userService.getUser({ id: userAId }, allUserRelations);
+        const userB = await this.userService.getUser({ id: userBId }, allUserRelations);
 
         const dmRoom = this.roomRepo.create({
             type: RoomType.DM,
@@ -74,30 +61,24 @@ export class RoomService {
         });
 
         const saved = await this.roomRepo.save(dmRoom);
-        const savedRoom = await this.roomRepo.findOne({ where: { id: saved.id }, relations: allRoomRelations });
-        if (!savedRoom) {
-            throw new UnauthorizedException("Error while saving Room")
-        }
+        const savedRoom = await this.getRoom(saved.id, allRoomRelations);
         return savedRoom;
     }
 
     async createGroupRoom(name: string, creatorId: number, userIds: number[]): Promise<Room> {
-        const creator = await this.userRepo.findOne({ where: { id: creatorId }, relations: allUserRelations });
-        if (!creator) {
-            throw new ConflictException("Creator not found");
-        }
+        const creator = await this.userService.getUser({ id: creatorId }, allUserRelations);
 
-        const users = await this.userRepo.find({ where: { id: In(userIds) }, relations: allUserRelations });
+        let users = await this.userRepo.find({ where: { id: In(userIds) }, relations: allUserRelations });
         if (users.length === 0) {
             throw new UnauthorizedException("No users found for the group");
         }
 
-        if (users.length < 2) {
-            throw new UnauthorizedException("Group needs to have at least 3 users");
+        if (users.some(user => user.id === creatorId)) {
+            users = users.filter(u => u.id !== creatorId);
         }
 
-        if (users.some(user => user.id === creatorId)) {
-            throw new ConflictException("Creator cannot be part of the group");
+        if (users.length < 2) {
+            throw new UnauthorizedException("Group needs to have at least 3 users");
         }
 
         const groupRoom = this.roomRepo.create({
@@ -108,23 +89,12 @@ export class RoomService {
         });
 
         const saved = await this.roomRepo.save(groupRoom);
-        const loadedRoom = await this.roomRepo.findOne({ where: { id: saved.id }, relations: allRoomRelations });
-        if (!loadedRoom) {
-            throw new UnauthorizedException("Error while loading Room");
-        }
+        const loadedRoom = await this.getRoom(saved.id, allRoomRelations);
         return loadedRoom;
     }
 
     async deleteRoom(roomId: number, userId: number): Promise<void> {
-        const room = await this.roomRepo.findOne({
-            where: { id: roomId },
-            relations: ["users", "creator"]
-        });
-
-        if (!room) {
-            throw new ConflictException("Room not found");
-        } 
-
+        const room = await this.getRoom(roomId, ["users", "creator"]);
         if (room.creator.id !== userId) {
             throw new UnauthorizedException("Only the creator can delete the room");
         }
@@ -137,10 +107,7 @@ export class RoomService {
     async sendServerInvite(senderId: number, receiverId: number, serverId: number): Promise<void> {
         const dmRoom = await this.findOrCreateDMRoom(senderId, receiverId);
 
-        const sender = await this.userRepo.findOne({ where: { id: senderId } , relations: ["friends"]});
-        if (!sender) {
-            throw new ConflictException("Sender not found");
-        }
+        const sender = await this.userService.getUser({ id: senderId }, ["friends"]);
 
         if(!sender.friends.some(f => f.id === receiverId)) {
             throw new ConflictException("Invite receiver is not you friend");
@@ -164,15 +131,8 @@ export class RoomService {
     }
 
     async addMessage(roomId: number, senderId: number, content: string): Promise<Message> {
-        const room = await this.roomRepo.findOne({ where: { id: roomId }, relations: ["users", "server"] });
-        if (!room) {
-            throw new UnauthorizedException("Room not found");
-        } 
-
-        const sender = await this.userRepo.findOne({ where: { id: senderId } });
-        if (!sender) {
-            throw new UnauthorizedException("User not found");
-        } 
+        const room = await this.getRoom(roomId, ["users", "server"]);
+        const sender = await this.userService.getUser({ id: senderId });
 
         if (!room.server && !room.users.some(u => u.id === senderId)) {
             throw new UnauthorizedException("User is not in this room");
@@ -185,5 +145,13 @@ export class RoomService {
             throw new UnauthorizedException("Error while loading message");
         }
         return loadedMessage;
+    }
+
+    async getRoom(roomId: number, relations?: string[]): Promise<Room> {
+        const room = await this.roomRepo.findOne({where: {id: roomId}, relations});
+        if(!room) {
+            throw new UnauthorizedException("Room not found");
+        }
+        return room;
     }
 }

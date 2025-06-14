@@ -7,6 +7,7 @@ import { User } from "../users/user.entity";
 import { Room, RoomType } from "../rooms/room.entity";
 import { allRoomRelations, allServerRelations } from "src/utils/utilts";
 import { RoomService } from "../rooms/room.service";
+import { UserService } from "../users/user.service";
 
 @Injectable()
 export class ServerService {
@@ -14,21 +15,25 @@ export class ServerService {
         @InjectRepository(ServerMembership) private membershipRepo: Repository<ServerMembership>,
         @InjectRepository(User) private userRepo: Repository<User>,
         @InjectRepository(Room) private roomRepo: Repository<Room>,
+        private userService: UserService,
         private roomService: RoomService) { }
 
-    async getServerById(serverId: number): Promise<ServerEntity> {
-        const server = await this.serverRepo.findOne({ where: { id: serverId }, relations: allServerRelations });
-        if (!server) {
-            throw new ConflictException("Server not found");
+    async getServerById(serverId: number, userId: number): Promise<ServerEntity> {
+        const server = await this.getServer(serverId, allServerRelations);
+
+        const user = await this.userService.getUser({id: userId});
+
+        const isServerMember = server.users.some(u => u.id == user.id);
+        const hasInvite = server.invites.some(u => u.id === user.id);
+        if(!isServerMember && !hasInvite) {
+            throw new UnauthorizedException("No permission to view server");
         }
+
         return server;
     }
 
     async createServer(name: string, creatorId: number, iconUrl?: string): Promise<ServerEntity> {
-        const creator = await this.userRepo.findOne({ where: { id: creatorId } });
-        if (!creator) {
-            throw new ConflictException("Creator not found");
-        }
+        const creator = await this.userService.getUser({ id: creatorId });
 
         const server = this.serverRepo.create({
             name,
@@ -50,10 +55,7 @@ export class ServerService {
 
 
     async deleteServer(serverId: number, userId: number): Promise<void> {
-        const server = await this.serverRepo.findOne({ where: { id: serverId }, relations: ["creator"] });
-        if (!server) {
-            throw new ConflictException("Server not found");
-        }
+        const server = await this.getServer(serverId, ["creator"]);
 
         if (server.creator.id !== userId) {
             throw new UnauthorizedException("Only the creator can delete the server");
@@ -64,10 +66,7 @@ export class ServerService {
     }
 
     async invite(serverId: number, senderId: number, invites: number[]): Promise<void> {
-        const server = await this.serverRepo.findOne({ where: { id: serverId }, relations: ["creator", "invites", "users"] });
-        if (!server) {
-            throw new ConflictException("Server does not exist");
-        }
+        const server = await this.getServer(serverId, ["creator", "invites", "users"]);
 
         if (senderId !== server.creator.id) {
             throw new UnauthorizedException("Only the creator can send invites");
@@ -89,15 +88,8 @@ export class ServerService {
     }
 
     async joinServer(serverId: number, userId: number): Promise<ServerEntity> {
-        const server = await this.serverRepo.findOne({ where: { id: serverId }, relations: ["users", "invites"] });
-        if (!server) {
-            throw new ConflictException("Server not found");
-        }
-
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (!user) {
-            throw new ConflictException("User not found");
-        }
+        const server = await this.getServer(serverId, ["users", "invites"]);
+        const user = await this.userService.getUser({ id: userId });
 
         if (server.users.some(u => u.id === userId)) {
             throw new ConflictException("User is already a member of the server");
@@ -125,15 +117,8 @@ export class ServerService {
     }
 
     async leaveServer(serverId: number, userId: number): Promise<void> {
-        const server = await this.serverRepo.findOne({ where: { id: serverId }, relations: ["users", "creator"] });
-        if (!server) {
-            throw new ConflictException("Server not found");
-        }
-
-        const user = await this.userRepo.findOne({ where: { id: userId } });
-        if (!user) {
-            throw new ConflictException("User not found");
-        }
+        const server = await this.getServer(serverId, ["users", "creator"]);
+        const user = await this.userService.getUser({ id: userId });
 
         if (!server.users.some(u => u.id === userId)) {
             throw new ConflictException("User is not a member of the server");
@@ -150,15 +135,8 @@ export class ServerService {
     }
 
     async createRoom(name: string, serverId: number, creatorId: number): Promise<Room> {
-        const creator = await this.userRepo.findOneBy({ id: creatorId });
-        if (!creator) {
-            throw new UnauthorizedException("Creator not found");
-        }
-
-        const server = await this.serverRepo.findOne({ where: { id: serverId }, relations: ["users", "rooms", "creator"] });
-        if (!server) {
-            throw new UnauthorizedException("Server not found");
-        }
+        const creator = await this.userService.getUser({ id: creatorId });
+        const server = await this.getServer(serverId, ["users", "rooms", "creator"] );
 
         if (server.creator.id !== creatorId) {
             throw new UnauthorizedException("Only the creator of the server can create rooms");
@@ -181,6 +159,14 @@ export class ServerService {
             throw new UnauthorizedException("Error while loading Server Room");
         }
         return savedRoom;
+    }
+
+    async getServer(serverId: number, relations?: string[]): Promise<ServerEntity> {
+        const server = await this.serverRepo.findOne({where: {id: serverId}, relations});
+        if(!server) {
+            throw new UnauthorizedException("Server not found");
+        }
+        return server;
     }
 
 }

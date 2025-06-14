@@ -12,11 +12,11 @@ export class ServerController {
 
     @Get(':serverId')
     @UseGuards(JwtAuthGuard)
-    async getServerById(@Param('serverId', ParseIntPipe) serverId: number): Promise<ServerEntity> {
+    async getServerById(@CurrentUser() user: User, @Param('serverId', ParseIntPipe) serverId: number): Promise<ServerEntity> {
         if(!serverId) {
             throw new BadRequestException("Missing serverId in request");
         }
-        return this.serverService.getServerById(serverId);
+        return this.serverService.getServerById(serverId, user.id);
     }
 
     @Post('create')
