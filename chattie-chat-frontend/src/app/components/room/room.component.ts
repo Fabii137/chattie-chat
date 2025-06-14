@@ -93,6 +93,9 @@ export class RoomComponent implements OnInit, OnDestroy {
     this.messageSubscripion = this.socketService.onMessage().subscribe((message: Message) => {
       if (message.room.id === roomId) {
         this.messages.push(message);
+        if(this.messages.length > 200) {
+          this.messages.shift();
+        }
         this.scrollToBottom();
       }
     });
