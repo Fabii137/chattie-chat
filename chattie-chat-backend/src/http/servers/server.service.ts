@@ -150,7 +150,7 @@ export class ServerService {
             type: RoomType.SERVER,
             name,
             server,
-            users: [creator],
+            users: [],
             creator: creator
         });
         const saved = await this.roomRepo.save(serverRoom);
