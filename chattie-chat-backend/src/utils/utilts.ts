@@ -16,8 +16,6 @@ export const allUserRelations = [
 
   "privateRooms",
   "privateRooms.users",
-  "privateRooms.messages",
-  "privateRooms.messages.sender",
   "privateRooms.creator",
 
   "servers",
@@ -25,8 +23,7 @@ export const allUserRelations = [
   "servers.creator",
   "servers.rooms",
 
-  "servers.rooms.messages",
-  "servers.rooms.messages.sender",
+  "servers.rooms",
   "servers.rooms.users",
   "servers.rooms.creator",
 ];
@@ -36,21 +33,15 @@ export const allMessageRelations = [
   "sender",
   "room",
   "room.users",
-  "room.creator",
-  "room.server",
-  "room.messages",
-  "room.messages.sender",
 ];
 
 
 export const allServerRelations = [
   "users",
   "creator",
-  "rooms",
   "invites",
 
+  "rooms",
   "rooms.users",
   "rooms.creator",
-  "rooms.messages",
-  "rooms.messages.sender",
 ];
