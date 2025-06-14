@@ -11,8 +11,8 @@ import { CommonModule } from '@angular/common';
 import { User } from '../entities/user.entity';
 import { AddServerDialogComponent } from './app.add-server-dialog/add-server-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { ServerService } from '../services/http-backend/server.service';
 import { Server } from '../entities/server.entity';
+import { ServerService } from '../services/server.service';
 
 @Component({
   selector: 'app-root',
@@ -38,11 +38,10 @@ export class AppComponent implements OnDestroy {
     const dialogRef = this.matDialog.open(AddServerDialogComponent);
 
     dialogRef.afterClosed().subscribe((result: { serverName: string}) => {
-      const creator = this.authService.currentUser;
-      if (!result || !creator)
+      if (!result)
         return;
-      this.serverService.createServer(result.serverName, creator.id).subscribe((server) => {
-        creator.servers.push(server);
+      this.serverService.createServer(result.serverName).subscribe((server) => {
+        this.authService.currentUser?.servers.push(server);
       });
     });
   }

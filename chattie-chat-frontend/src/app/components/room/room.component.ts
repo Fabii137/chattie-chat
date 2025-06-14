@@ -1,13 +1,11 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Room, RoomType } from '../../../entities/room.entity';
-import { RoomService } from '../../../services/http-backend/room.service';
 import { SocketService } from '../../../services/socket.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
 import { User } from '../../../entities/user.entity';
 import { firstValueFrom, Subscription } from 'rxjs';
 import { MatSidenavModule } from '@angular/material/sidenav';
-import { UserService } from '../../../services/http-backend/user.service';
 import { CommonModule } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
@@ -16,8 +14,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { Message } from '../../../entities/message.entity';
 import { MatDialog } from '@angular/material/dialog';
 import { NewGroupDialogComponent } from './new-group-dialog/new-group-dialog.component';
-import { ServerService } from '../../../services/http-backend/server.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { RoomService } from '../../../services/room.service';
+import { UserService } from '../../../services/user.service';
+import { ServerService } from '../../../services/server.service';
 
 @Component({
   selector: 'app-room',
@@ -76,16 +76,12 @@ export class RoomComponent implements OnInit, OnDestroy {
     if (!user)
       return;
 
-    this.authService.currentUser = await firstValueFrom(this.userService.getUserById(user.id));
+    this.authService.currentUser = await firstValueFrom(this.userService.getMe());
   }
 
   private async loadRoom(roomId: number) {
-    const currentUser = this.getCurrentUser()
-    if (!currentUser) 
-      return;
-
-    this.room = await firstValueFrom(this.roomService.getRoomById(roomId, currentUser.id));
-    this.messages = (this.room.messages ?? []).sort((a, b) =>
+    this.room = await firstValueFrom(this.roomService.getRoomById(roomId));
+    this.messages = (this.room?.messages ?? []).sort((a, b) =>
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
     this.scrollToBottom();
@@ -131,10 +127,10 @@ export class RoomComponent implements OnInit, OnDestroy {
     const serverId = Number(serverIdStr);
     const currentUser = this.getCurrentUser();
 
-    if(!currentUser?.id)
+    if(!currentUser)
       return;
 
-    this.serverService.joinServer(serverId, currentUser.id).subscribe(server => {
+    this.serverService.joinServer(serverId).subscribe(server => {
       currentUser.servers.push(server);
       this.openSnackBar(`Successfully joined Server ${server.name}`);
     })
@@ -155,9 +151,9 @@ export class RoomComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe((result: {groupName: string, members: User[]}) => {
-      if(!currentUser || !result)
+      if(!result)
         return;
-      this.roomService.createGroupRoom(result.groupName, currentUser.id, result.members.map(m => m.id)).subscribe(room => {
+      this.roomService.createGroupRoom(result.groupName, result.members.map(m => m.id)).subscribe(room => {
         currentUser.privateRooms.push(room);
         this.openSnackBar(`Successfully created group ${room.name}`)
       })

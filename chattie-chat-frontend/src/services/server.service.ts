@@ -1,9 +1,9 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { Server } from '../../entities/server.entity';
-import { Room } from '../../entities/room.entity';
+import { Server } from '../entities/server.entity';
+import { environment } from '../environments/environment';
+import { Room } from '../entities/room.entity';
 
 @Injectable({ providedIn: 'root' })
 export class ServerService {
@@ -11,47 +11,47 @@ export class ServerService {
 
     getServerById(serverId: number): Observable<Server> {
         const url = `${environment.apiURL}servers/${serverId}`;
-        return this.http.get<Server>(url).pipe(
+        return this.http.get<Server>(url, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    createServer(name: string, creatorId: number, iconUrl?: string): Observable<Server> {
+    createServer(name: string, iconUrl?: string): Observable<Server> {
         const url = `${environment.apiURL}servers/create`;
-        return this.http.post<Server>(url, { name, creatorId, iconUrl }).pipe(
+        return this.http.post<Server>(url, { name, iconUrl }, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    deleteServer(serverId: number, userId: number): Observable<void> {
+    deleteServer(serverId: number): Observable<void> {
         const url = `${environment.apiURL}servers/${serverId}/delete`;
-        return this.http.delete<void>(url, { body: { userId } }).pipe(
+        return this.http.delete<void>(url, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    inviteToServer(serverId: number, senderId: number, invites: number[]): Observable<void> {
+    inviteToServer(serverId: number, invites: number[]): Observable<void> {
         const url = `${environment.apiURL}servers/${serverId}/invite`;
-        return this.http.post<void>(url, { senderId, invites });
+        return this.http.post<void>(url, { invites }, { withCredentials: true });
     }
 
-    joinServer(serverId: number, userId: number): Observable<Server> {
+    joinServer(serverId: number): Observable<Server> {
         const url = `${environment.apiURL}servers/${serverId}/join`;
-        return this.http.post<Server>(url, { userId }).pipe(
+        return this.http.post<Server>(url, {}, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    leaveServer(serverId: number, userId: number): Observable<void> {
+    leaveServer(serverId: number): Observable<void> {
         const url = `${environment.apiURL}servers/${serverId}/leave`;
-        return this.http.post<void>(url, { userId }).pipe(
+        return this.http.post<void>(url, {}, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    createRoom(name: string, serverId: number, creatorId: number): Observable<Room> {
+    createRoom(name: string, serverId: number): Observable<Room> {
         const url = `${environment.apiURL}servers/${serverId}/create-room`;
-        return this.http.post<Room>(url, { name, creatorId }).pipe(
+        return this.http.post<Room>(url, { name }, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }

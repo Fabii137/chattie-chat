@@ -1,6 +1,5 @@
 import { Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { UserService } from '../../../services/http-backend/user.service';
 import { User } from '../../../entities/user.entity';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,7 +10,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { RoomService } from '../../../services/http-backend/room.service';
+import { UserService } from '../../../services/user.service';
+import { RoomService } from '../../../services/room.service';
 
 type FriendSection = 'online' | 'all' | 'requests' | 'add';
 
@@ -56,7 +56,7 @@ export class FriendsComponent {
       cancelText: 'Cancel'
     }).subscribe((confirmed) => {
       if (confirmed) {
-        this.userService.deleteFriend(this.user?.id || 0, friend.id || 0).subscribe({
+        this.userService.deleteFriend(friend.id).subscribe({
           next: () => {
             this.friends = this.friends.filter(f => f.id !== friend.id);
             this.onlineFriends = this.onlineFriends.filter(f => f.id !== friend.id);
@@ -75,7 +75,7 @@ export class FriendsComponent {
       return;
     }
 
-    this.userService.sendFriendRequest(this.user.id, this.newFriendUsername).subscribe({
+    this.userService.sendFriendRequest(this.newFriendUsername).subscribe({
       next: () => {
         this.openSnackbar(`Friend request sent to ${this.newFriendUsername}`);
         this.newFriendUsername = '';
@@ -87,12 +87,7 @@ export class FriendsComponent {
   }
 
   loadFriends(): void {
-    if(!this.user || !this.user.id) {
-      this.openSnackbar('User not found');
-      return;
-    }
-
-    this.userService.getUserById(this.user.id).subscribe({
+    this.userService.getMe().subscribe({
       next: (user: User) => {
         this.user = user;
         this.friends = user.friends;
@@ -105,12 +100,7 @@ export class FriendsComponent {
   }
 
   loadFriendRequests(): void {
-    if(!this.user || !this.user.id) {
-      this.openSnackbar('User not found');
-      return;
-    }
-
-    this.userService.getFriendRequests(this.user.id).subscribe({
+    this.userService.getFriendRequests().subscribe({
       next: (requests: User[]) => {
         this.friendRequests = requests;
       },
@@ -121,12 +111,12 @@ export class FriendsComponent {
   }
 
   acceptFriendRequest(request: User): void {
-    if(!this.user || !this.user.id || !request || !request.id) {
+    if(!request || !request.id) {
       this.openSnackbar('Invalid user or request data');
       return;
     }
 
-    this.userService.acceptFriendRequest(request.id, this.user.id).subscribe({
+    this.userService.acceptFriendRequest(request.id).subscribe({
       next: () => {
         this.loadFriendRequests();
         this.loadFriends();
@@ -139,11 +129,11 @@ export class FriendsComponent {
   }
 
   rejectFriendRequest(request: User): void {
-    if(!this.user || !this.user.id || !request || !request.id) {
+    if(!request || !request.id) {
       this.openSnackbar('Invalid user or request data');
       return;
     }
-    this.userService.rejectFriendRequest(this.user.id, request.id).subscribe({
+    this.userService.rejectFriendRequest(request.id).subscribe({
       next: () => {
         this.loadFriendRequests();
         this.loadFriends();
@@ -156,10 +146,7 @@ export class FriendsComponent {
   }
 
   openChat(friend: User) {
-    if(!this.user)
-      return;
-
-    this.roomService.openDMRoom(this.user.id, friend.id).subscribe(room => {
+    this.roomService.openDMRoom(friend.id).subscribe(room => {
       this.router.navigate(['rooms', room.id]);
     })
   }

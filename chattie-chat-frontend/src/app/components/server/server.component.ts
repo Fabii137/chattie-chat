@@ -1,10 +1,9 @@
-import { Component, ElementRef, OnDestroy, OnInit, runInInjectionContext, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Server } from '../../../entities/server.entity';
 import { Room } from '../../../entities/room.entity';
 import { Message } from '../../../entities/message.entity';
 import { User } from '../../../entities/user.entity';
 import { firstValueFrom, Subscription } from 'rxjs';
-import { ServerService } from '../../../services/http-backend/server.service';
 import { AuthService } from '../../../services/auth.service';
 import { SocketService } from '../../../services/socket.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -20,6 +19,7 @@ import { NewServerRoomDialogComponent } from './new-server-room-dialog/new-serve
 import { MatMenuModule } from '@angular/material/menu'
 import { InviteFriendDialogComponent } from './invite-friend-dialog/invite-friend-dialog.component';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ServerService } from '../../../services/server.service';
 
 
 @Component({
@@ -106,14 +106,12 @@ export class ServerComponent implements OnInit, OnDestroy {
   }
 
   openAddRoomDialog() {
-    if (!this.currentUser)
-      return;
     const dialogRef = this.matDialog.open(NewServerRoomDialogComponent);
 
     dialogRef.afterClosed().subscribe((result: { roomName: string }) => {
-      if (!this.currentUser || !result || !this.server?.id)
+      if (!result || !this.server?.id)
         return;
-      this.serverService.createRoom(result.roomName, this.server.id, this.currentUser.id).subscribe({
+      this.serverService.createRoom(result.roomName, this.server.id).subscribe({
         next: (room) => {
           this.openSnackBar("Successfully created room");
           this.server?.rooms.push(room);
@@ -138,10 +136,10 @@ export class ServerComponent implements OnInit, OnDestroy {
     });
 
     dialogRef.afterClosed().subscribe((selectedFriendIds: number[]) => {
-      if (!this.server?.id || !this.currentUser?.id || !selectedFriendIds)
+      if (!this.server?.id || !selectedFriendIds)
         return;
 
-      this.serverService.inviteToServer(this.server.id, this.currentUser.id, selectedFriendIds).subscribe(() => { });
+      this.serverService.inviteToServer(this.server.id, selectedFriendIds).subscribe(() => { });
     });
   }
 

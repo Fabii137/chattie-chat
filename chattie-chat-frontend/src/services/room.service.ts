@@ -1,37 +1,37 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { catchError, Observable, throwError } from 'rxjs';
-import { environment } from '../../environments/environment';
-import { Room } from '../../entities/room.entity';
+import { Room } from '../entities/room.entity';
+import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class RoomService {
     constructor(private http: HttpClient) { }
 
-    getRoomById(roomId: number, userId: number): Observable<Room> {
-        const url = `${environment.apiURL}rooms/${roomId}/${userId}`;
-        return this.http.get<Room>(url).pipe(
+    getRoomById(roomId: number): Observable<Room> {
+        const url = `${environment.apiURL}rooms/${roomId}`;
+        return this.http.get<Room>(url, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    openDMRoom(userAId: number, userBId: number): Observable<Room> {
+    openDMRoom(userId: number): Observable<Room> {
         const url = `${environment.apiURL}rooms/dm/open`;
-        return this.http.post<Room>(url, { userAId, userBId }).pipe(
+        return this.http.post<Room>(url, { userId }, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    createGroupRoom(name: string, creatorId: number, userIds: number[]): Observable<Room> {
+    createGroupRoom(name: string, userIds: number[]): Observable<Room> {
         const url = `${environment.apiURL}rooms/groups/create`;
-        return this.http.post<Room>(url, { name, creatorId, userIds }).pipe(
+        return this.http.post<Room>(url, { name, userIds }, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
 
-    createServerRoom(name: string, creatorId: number, serverId: number): Observable<Room> {
+    createServerRoom(name: string, serverId: number): Observable<Room> {
         const url = `${environment.apiURL}servers/${serverId}/rooms/create`;
-        return this.http.post<Room>(url, { name, creatorId }).pipe(
+        return this.http.post<Room>(url, { name }, { withCredentials: true }).pipe(
             catchError(this.handleError)
         );
     }
