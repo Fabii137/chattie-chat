@@ -4,6 +4,6 @@ interface Environment {
 }
 
 export const environment: Environment = {
-    apiURL: '/api/',
-    socketURL: '/'
+    apiURL: '/ChattieChat/api/',
+    socketURL: '/ChattieChat/'
 }
