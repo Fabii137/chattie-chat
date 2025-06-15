@@ -13,6 +13,7 @@ import { AddServerDialogComponent } from './app.add-server-dialog/add-server-dia
 import { MatDialog } from '@angular/material/dialog';
 import { Server } from '../entities/server.entity';
 import { ServerService } from '../services/server.service';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-root',
@@ -23,7 +24,7 @@ import { ServerService } from '../services/server.service';
 export class AppComponent implements OnDestroy {
   @ViewChild('drawer') drawer!: MatDrawer;
   title = 'chatty-chat-frontend';
-  constructor(private authService: AuthService, private matDialog: MatDialog, private serverService: ServerService, private router: Router) { }
+  constructor(private authService: AuthService, private matDialog: MatDialog, private serverService: ServerService, private router: Router, private snackBar: MatSnackBar) { }
 
   ngOnDestroy(): void {
     this.authService.setOffline();
@@ -42,6 +43,7 @@ export class AppComponent implements OnDestroy {
         return;
       this.serverService.createServer(result.serverName).subscribe((server) => {
         this.authService.currentUser?.servers.push(server);
+        this.snackBar.open(`Successfully created server ${result.serverName}`);
       });
     });
   }
