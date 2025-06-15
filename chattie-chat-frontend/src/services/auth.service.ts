@@ -35,8 +35,10 @@ export class AuthService {
       this.currentUser = user;
       return user;
     } catch (error: any) {
-      console.error('Register error:', error);
-      this.openSnackBar(error.message || 'Registration failed');
+      if(!environment.production)
+        console.error('Register error:', error);
+      if(error.error?.message !== 'Unauthorized')
+        this.openSnackBar(error.message || 'Registration failed');
       return null;
     }
   }
@@ -48,8 +50,10 @@ export class AuthService {
       this.currentUser = user;
       return user;
     } catch (error: any) {
-      console.error('Login error:', error);
-      this.openSnackBar(error.error?.message || 'Login failed');
+      if(!environment.production)
+        console.error('Login error:', error);
+      if(error.error?.message !== 'Unauthorized')
+        this.openSnackBar(error.error?.message || 'Login failed');
       return null;
     }
   }

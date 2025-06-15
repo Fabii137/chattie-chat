@@ -61,15 +61,18 @@ export class ServerService {
     if (error.status) {
       const errorMessage = error.error?.message ? `${error.error.message}` : `Server returned code: ${error.status}`;
 
-      this.snackBar.open(errorMessage, 'Close', {
-        duration: 3000,
-        verticalPosition: 'top',
-        horizontalPosition: 'center',
-      });
-
-      console.error('ServerService HTTP Error:', errorMessage, error);
+      if (errorMessage !== 'Unauthorized') {
+        this.snackBar.open(errorMessage, 'Close', {
+          duration: 3000,
+          verticalPosition: 'top',
+          horizontalPosition: 'center',
+        });
+      }
+      if(!environment.production)
+        console.error('ServerService HTTP Error:', errorMessage, error);
     } else {
-      console.warn('Non-HTTP error occurred:', error.message || error);
+      if(!environment.production)
+        console.warn('Non-HTTP error occurred:', error.message || error);
     }
 
     return throwError(() => error);
