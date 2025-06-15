@@ -1,7 +1,5 @@
 export const allRoomRelations = [
   "users",
-  "messages",
-  "messages.sender",
   "creator",
   "server",
   "server.users",
