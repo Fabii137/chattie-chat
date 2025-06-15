@@ -14,6 +14,9 @@ export class UserService {
 
     async getUserById(userId: number): Promise<User> {
         const user = await this.getUser({ id: userId }, allUserRelations);
+        if (!user.isOnline) {
+            this.updateUser({ id: user.id }, { isOnline: true });
+        }
         return user;
     }
 
