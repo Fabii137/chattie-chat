@@ -158,6 +158,16 @@ export class RoomService {
         if(!room) {
             throw new UnauthorizedException("Room not found");
         }
+
+        // TODO: add lazy loading instead of only loading last 200 messages
+        room.messages = await this.messageRepo.find({
+            where: {room: {id: room.id}},
+            order: {timestamp: 'DESC'},
+            take: 200,
+            relations: ["sender"],
+        });
+        room.messages.reverse();
+
         return room;
     }
 }
