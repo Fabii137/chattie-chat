@@ -12,11 +12,13 @@ export class SocketService {
 
   connect() {
     this.socket = io('/', {
-      path: `${environment.socketURL}socket.io`
+      path: `${environment.socketURL}socket.io`,
+      withCredentials: true
     });
 
     this.socket.on('connect', () => {
-      console.log('Socket connected:', this.socket?.id);
+      if(!environment.production)
+        console.log('Socket connected:', this.socket?.id);
     });
   }
 
