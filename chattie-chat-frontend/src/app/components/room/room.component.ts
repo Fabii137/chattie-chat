@@ -69,6 +69,7 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.socketService.disconnect();
+    this.messageSubscripion?.unsubscribe();
   }
 
   async loadCurrentUser() {
@@ -81,9 +82,7 @@ export class RoomComponent implements OnInit, OnDestroy {
 
   private async loadRoom(roomId: number) {
     this.room = await firstValueFrom(this.roomService.getRoomById(roomId));
-    this.messages = (this.room?.messages ?? []).sort((a, b) =>
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
+    this.messages = this.room?.messages ?? [];
     this.scrollToBottom();
   }
 
