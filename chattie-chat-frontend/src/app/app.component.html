@@ -2,7 +2,7 @@
     <mat-drawer *ngIf="isLoggedIn()" #drawer class="app-sidenav" mode="side" opened>
         <div class="server-list">
             <div class="add-btn" (click)="openCreateServerDialog()"><mat-icon>add</mat-icon></div>
-            <div class="server" (click)="openServerPage(server)" *ngFor="let server of getLoggedInUser()?.servers" [matTooltip]="server.name" matTooltipPosition="right" >
+            <div class="server" (click)="openServerPage(server)" *ngFor="let server of getLoggedInUser()?.servers" [matTooltip]="server.name" matTooltipPosition="right" matTooltipShowDelay="100">
                 <img [src]="server.iconUrl || 'assets/img/default.jpg'" [alt]="server.name">
             </div>
         </div>
