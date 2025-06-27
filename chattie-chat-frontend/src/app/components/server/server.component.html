@@ -18,13 +18,11 @@
                     <mat-icon>settings</mat-icon>
                     Server Settings
                 </button>
-            </mat-menu>
-            <div class="new-room-btn" *ngIf="currentUser?.id === server?.creator?.id">
-                <button mat-flat-button color="primary" (click)="openAddRoomDialog()">
+                <button mat-menu-item (click)="openAddRoomDialog()" *ngIf="currentUser?.id === server?.creator?.id">
                     <mat-icon>add</mat-icon>
                     New Room
                 </button>
-            </div>
+            </mat-menu>
             <div *ngFor="let room of server.rooms" class="server-room" [class.selected]="room.id === roomId"
                 (click)="selectRoom(room)">
                 # {{ room.name }}

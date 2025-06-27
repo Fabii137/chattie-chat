@@ -12,16 +12,6 @@
     overflow-y: auto;
 }
 
-.new-room-btn {
-    display: flex;
-    justify-content: center;
-    padding: 1rem;
-}
-
-.new-room-btn button {
-    width: 100%;
-}
-
 .server-content {
     display: flex;
     flex-direction: column;
