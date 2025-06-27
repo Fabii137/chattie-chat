@@ -40,6 +40,7 @@ export class ServerComponent implements OnInit, OnDestroy {
 
   currentUser: User | null = null;
   private messageSubscripion: Subscription | null = null;
+  private routeSubscription?: Subscription;
 
   constructor(
     private serverService: ServerService,
@@ -53,18 +54,17 @@ export class ServerComponent implements OnInit, OnDestroy {
   ) { }
 
   async ngOnInit(): Promise<void> {
-    const user = this.authService.currentUser;
-    if (!user)
-      return;
-    this.currentUser = user;
+    this.currentUser = this.authService.currentUser;
 
-    const serverId = Number(this.route.snapshot.paramMap.get('serverId'));
-    try {
-      this.server = await firstValueFrom(this.serverService.getServerById(serverId));
-    } catch(err: any) {
-      this.openSnackBar(err.message || "Loading server failed");
-    }
-
+    this.routeSubscription = this.route.paramMap.subscribe(async paramMap => {
+      this.room = null;
+      const serverId = Number(this.route.snapshot.paramMap.get('serverId'));
+      try {
+        this.server = await firstValueFrom(this.serverService.getServerById(serverId));
+      } catch (err: any) {
+        this.openSnackBar(err.message || "Loading server failed");
+      }
+    })
   }
 
   ngOnDestroy(): void {
@@ -81,24 +81,24 @@ export class ServerComponent implements OnInit, OnDestroy {
 
     this.roomId = room.id;
     this.room = await firstValueFrom(this.roomService.getRoomById(this.roomId));
-    
-    this.messages = (this.room.messages || []).sort((a, b) =>
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
 
+    this.messages = this.room.messages || [];
+    this.setupSocket(this.roomId);
+    this.scrollToBottom();
+  }
+
+  setupSocket(roomId: number) {
     this.messageSubscripion?.unsubscribe();
-    this.socketService.joinRoom(room.id);
+    this.socketService.joinRoom(roomId);
     this.messageSubscripion = this.socketService.onMessage().subscribe(msg => {
-      if (msg.room.id === room.id) {
+      if (msg.room.id === roomId) {
         this.messages.push(msg);
-        if(this.messages.length > 200) {
+        if (this.messages.length > 200) {
           this.messages.shift();
         }
         this.scrollToBottom();
       }
     });
-
-    this.scrollToBottom();
   }
 
   sendMessage() {
