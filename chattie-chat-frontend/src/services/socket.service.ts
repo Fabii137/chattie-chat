@@ -12,7 +12,7 @@ export class SocketService {
 
   connect() {
     this.socket = io('/', {
-      path: `${environment.socketURL}socket.io`,
+      path: environment.socketURL,
       withCredentials: true
     });
 
