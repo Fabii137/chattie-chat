@@ -36,13 +36,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`client disconnected: ${client.id}`);
+        if(this.configService.get<string>('NODE_ENV') === 'production')
+            console.log(`client disconnected: ${client.id}`);
     }
 
     @SubscribeMessage('join-room')
     handleJoinRoom(@MessageBody() roomId: number, @ConnectedSocket() client: Socket) {
         client.join(roomId.toString());
-        console.log(`Client ${client.id} joined room ${roomId}`)
+        if(this.configService.get<string>('NODE_ENV') === 'production')
+            console.log(`Client ${client.id} joined room ${roomId}`)
     }
 
     @SubscribeMessage('send-message')
