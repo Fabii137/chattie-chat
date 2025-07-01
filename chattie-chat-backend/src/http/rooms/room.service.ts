@@ -153,6 +153,12 @@ export class RoomService {
         return loadedMessage;
     }
 
+    async userHasAccess(roomId: number, userId: number): Promise<boolean> {
+        const room = await this.getRoom(roomId, ["users"]);
+        const hasAccess = room.users.find(u => u.id === userId);
+        return hasAccess ? true : false;
+    }
+
     async getRoom(roomId: number, relations?: string[]): Promise<Room> {
         const room = await this.roomRepo.findOne({where: {id: roomId}, relations});
         if(!room) {
