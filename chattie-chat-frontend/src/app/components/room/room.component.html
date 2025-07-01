@@ -10,7 +10,7 @@
             <div *ngFor="let room of getCurrentUser()?.privateRooms" class="room" [class.selected]="room.id === roomId"
                 (click)="selectRoom(room)">
                 <img *ngIf="getRoomIcon(room)" [src]="getRoomIcon(room)" alt="room icon" />
-                {{ room.name }}
+                <span class="room-name">{{ getRoomDisplayName(room) }}</span>
             </div>
         </div>
     </mat-drawer>

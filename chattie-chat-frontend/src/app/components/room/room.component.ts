@@ -100,6 +100,14 @@ export class RoomComponent implements OnInit, OnDestroy {
     });
   }
 
+  getRoomDisplayName(room: Room): string {
+    if(room.type != RoomType.DM)
+      return room.name;
+
+    const friend = room.users.find(u => u.id !== this.getCurrentUser()?.id);
+    return friend?.username || 'Unknown';
+  }
+
   getRoomIcon(room: Room): string | null {
     const currentUser = this.getCurrentUser();
     if (room.type !== RoomType.DM || !currentUser)
@@ -115,10 +123,10 @@ export class RoomComponent implements OnInit, OnDestroy {
   }
 
   async sendMessage() {
-    const currentUser = this.getCurrentUser();
-    if (!this.newMessage.trim() || !this.roomId || !currentUser)
+    if (!this.newMessage.trim() || !this.roomId)
       return;
-    this.socketService.sendMessage(this.roomId, currentUser.id, this.newMessage);
+
+    this.socketService.sendMessage(this.roomId, this.newMessage);
     this.newMessage = "";
   }
 

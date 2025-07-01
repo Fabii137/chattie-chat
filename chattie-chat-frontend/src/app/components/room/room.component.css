@@ -37,13 +37,20 @@
   border: 1px solid var(--mat-sys-on-surface);
   border-radius: 10px;
   text-align: center;
-  font-size: 13px;
   display: flex;
   align-items: center;
   gap: 8px;
   cursor: pointer;
   user-select: none;
   transition: background-color 0.2s, border-color 0.2s;
+}
+
+.room-name {
+  white-space: nowrap;
+  flex: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  font-size: 13px;
 }
 
 .room img {
