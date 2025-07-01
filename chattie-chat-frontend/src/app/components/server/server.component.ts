@@ -102,9 +102,9 @@ export class ServerComponent implements OnInit, OnDestroy {
   }
 
   sendMessage() {
-    if (!this.newMessage.trim() || !this.roomId || !this.currentUser)
+    if (!this.newMessage.trim() || !this.roomId)
       return;
-    this.socketService.sendMessage(this.roomId, this.currentUser.id, this.newMessage);
+    this.socketService.sendMessage(this.roomId, this.newMessage);
     this.newMessage = '';
   }
 

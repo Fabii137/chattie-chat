@@ -35,8 +35,8 @@ export class SocketService {
     this.socket?.emit('join-room', roomId);
   }
 
-  sendMessage(roomId: number, senderId: number, message: string) {
-    this.socket?.emit('send-message', { roomId, senderId, message });
+  sendMessage(roomId: number, message: string) {
+    this.socket?.emit('send-message', { roomId, message });
   }
 
   onMessage(): Observable<Message> {
