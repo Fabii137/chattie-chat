@@ -41,7 +41,13 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     }
 
     @SubscribeMessage('join-room')
-    handleJoinRoom(@MessageBody() roomId: number, @ConnectedSocket() client: Socket) {
+    async handleJoinRoom(@MessageBody() roomId: number, @ConnectedSocket() client: Socket) {
+        const hasAccess = await this.roomService.userHasAccess(roomId, client.data.userId);
+        if(!hasAccess) {
+            client.emit('error', { message: 'Access denied to room' });
+            return;
+        }
+
         client.join(roomId.toString());
         if(this.configService.get<string>('NODE_ENV') === 'production')
             console.log(`Client ${client.id} joined room ${roomId}`)
