@@ -1,15 +1,17 @@
 import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
-import { Repository } from "typeorm";
+import { Repository, SelectQueryBuilder } from "typeorm";
 import { User } from "./user.entity";
 import { InjectRepository } from "@nestjs/typeorm";
 import { RegisterDto } from "src/http/dtos/register.dto";
 import * as bcrypt from 'bcrypt';
 import { allUserRelations } from "src/utils/utilts";
+import { Room } from "../rooms/room.entity";
 
 @Injectable()
 export class UserService {
     constructor(
-        @InjectRepository(User) private userRepo: Repository<User>
+        @InjectRepository(User) private userRepo: Repository<User>,
+        @InjectRepository(Room) private roomRepo: Repository<Room>
     ) { }
 
     async getUserById(userId: number): Promise<User> {
@@ -166,6 +168,29 @@ export class UserService {
         if (!user) {
             throw new UnauthorizedException("User not found");
         }
+
+        // sort rooms for the latest message
+        if (relations?.includes("privateRooms")) {
+            // sort messages
+            const subQuery = this.roomRepo.createQueryBuilder('room_sub')
+                .select('MAX(message.timestamp)')
+                .from('messages', 'message')
+                .where('message.room_id = room.id')
+                .getQuery();
+
+            // sort rooms and select attributes
+            const sortedRooms = await this.roomRepo.createQueryBuilder('room')
+                .leftJoin('room.users', 'userFilter') // filter
+                .leftJoinAndSelect('room.users', 'user') // select
+                .leftJoinAndSelect('room.creator', 'creator')
+                .leftJoinAndSelect('room.server', 'server') 
+                .where('userFilter.id = :userId', { userId: user.id })
+                .orderBy(`(${subQuery})`, 'DESC')
+                .getMany();
+            
+            user.privateRooms = sortedRooms; // replace rooms
+        }
+
         return user;
 
     }
